@@ -6,6 +6,7 @@ import {
   baselines,
   controlAccounts,
   requests,
+  requestLines,
   procurementPackages,
   awardDecisions,
   financeValidations,
@@ -86,6 +87,24 @@ async function seed() {
     })
     .returning();
 
+  // Second real, BOQ-sourced control account — added in Checkpoint 2 so the
+  // demo request (below) has somewhere real to roll up to, and so Page 01's
+  // control sheet has more than one row.
+  const [masonryAccount] = await db
+    .insert(controlAccounts)
+    .values({
+      projectId: project.id,
+      code: "TRADE-MASON",
+      name: "Block & Masonry (BOQ trade rollup)",
+      currentBudget: "304375.96",
+      currency: "USD",
+      budgetSource:
+        "Cost Control System.xlsm > \u{1F4D0} BOQ MASTER, sum of BUDGET AMOUNT (USD) " +
+        "where TRADE NAME = 'Block & Masonry' (4 rows, MASON-SUB-BLK150-095, MASON-SUB-BLK200-096, " +
+        "MASON-GF-BLK100-097, MASON-GF-BLK150-098). Extracted 2026-08-04.",
+    })
+    .returning();
+
   const [request] = await db
     .insert(requests)
     .values({
@@ -93,11 +112,123 @@ async function seed() {
       controlAccountId: controlAccount.id,
       reference: "MR-SWTBK-2026-0035",
       controlledEstimate: "1382400.00",
-      quantity: "240.000",
-      unit: "m3",
+      currency: "GHS",
       status: "APPROVED",
+      requestedBy: "Site QS Team",
+      workArea: "Substructure — Raft Foundation",
+      needByDate: new Date("2026-08-05T00:00:00Z"),
+      priority: "STANDARD",
+      createdAt: new Date("2026-07-20T09:00:00Z"),
     })
     .returning();
+
+  // Line breakdown per 03_PAGE_CONTRACTS/PAGE_03_REQUEST_DOSSIER.md §Lines
+  // and allocations, for the fixture — pack-sourced amounts, not invented.
+  // BOQ verification against the real workbook was done independently for
+  // each line (see boqSourceNote per row); the results differ per line and
+  // are reported as found, not smoothed into a consistent story.
+  await db.insert(requestLines).values([
+    {
+      requestId: request.id,
+      lineNo: 1,
+      description: "Premix RC concrete C30/35 vibrated — Raft Foundation (General)",
+      costType: "MAT",
+      authorityType: "BOQ",
+      authorityReference: "CONC-SUB-RAFT-014",
+      requestedQty: "240.000",
+      requestedUnit: "m3",
+      exposureAmount: "1123200.00",
+      exposureCurrency: "GHS",
+      boqAvailableQty: "2074.625",
+      boqSourceNote:
+        "Verified: BOQ MASTER row 14, item CONC-SUB-RAFT-014 — 2074.625 m3 available (0 issued), " +
+        "real rate USD 142.75/m3. The fixture's own implied rate (GHS 4,680.00/m3) does not match " +
+        "the workbook's real rate/currency for this code — a disclosed inconsistency in the golden " +
+        "fixture itself, not resolved here.",
+    },
+    {
+      requestId: request.id,
+      lineNo: 2,
+      description: "Concrete pump — 2 shifts",
+      costType: "PLT",
+      authorityType: "BOQ",
+      authorityReference: "PLANT-SUB-PUMP-031",
+      requestedQty: "2.000",
+      requestedUnit: "shift",
+      exposureAmount: "85200.00",
+      exposureCurrency: "GHS",
+      boqAvailableQty: null,
+      boqSourceNote:
+        "NOT FOUND: searched all 103 sheets of Cost Control System.xlsm for 'PLANT-SUB-PUMP-031' — " +
+        "zero matches. This BOQ code cited by the golden fixture does not exist in the source " +
+        "workbook. Treated honestly as missing BOQ authority (see readiness/commercial-controls), " +
+        "even though the fixture's own request already carries status APPROVED — a real contradiction " +
+        "in the source fixture, logged rather than silently resolved.",
+    },
+    {
+      requestId: request.id,
+      lineNo: 3,
+      description: "Concrete testing & quality assurance",
+      costType: "QLT",
+      authorityType: "EXCEPTION",
+      authorityReference: "EXC-008",
+      requestedQty: "1.000",
+      requestedUnit: "lot",
+      exposureAmount: "174000.00",
+      exposureCurrency: "GHS",
+      boqAvailableQty: null,
+      boqSourceNote:
+        "EXC-008 is a recognized exception code: present in BOQ MASTER (row 177, code-integrity VALID) " +
+        "and named in EXCEPTION_AND_DECISION_CONTROL_STANDARD.md's seeded exception set (EXC-003/006/008). " +
+        "A real, valid exception authority — not a BOQ quantity lookup, so no available-quantity figure applies.",
+    },
+  ]);
+
+  // Demo request — NOT part of the golden-transaction-fixture.json
+  // authority. Added in Checkpoint 2 because the golden request is already
+  // APPROVED with a package/award/PO/PV downstream, so it can't exercise
+  // "Approve & Prepare Package" or most register/dossier states. Flagged
+  // via isDemoData/demoNote everywhere it's read, not silently mixed in.
+  const [demoRequest] = await db
+    .insert(requests)
+    .values({
+      projectId: project.id,
+      controlAccountId: masonryAccount.id,
+      reference: "MR-DEMO-0001",
+      controlledEstimate: "9595.00",
+      currency: "USD",
+      status: "SUBMITTED",
+      requestedBy: "Site QS Team",
+      workArea: "Ground Floor — Block & Masonry",
+      needByDate: new Date("2026-08-20T00:00:00Z"),
+      priority: "URGENT",
+      createdAt: new Date("2026-08-03T14:00:00Z"),
+      isDemoData: true,
+      demoNote:
+        "Added in Checkpoint 2 to exercise the 'Approve & Prepare Package' transition and " +
+        "register/dossier states the (already fully-advanced) golden transaction cannot. Not part " +
+        "of golden-transaction-fixture.json.",
+    })
+    .returning();
+
+  await db.insert(requestLines).values({
+    requestId: demoRequest.id,
+    lineNo: 1,
+    description: "150mm hollow concrete block — GF walls (general)",
+    costType: "MAT",
+    authorityType: "BOQ",
+    authorityReference: "MASON-GF-BLK150-098",
+    requestedQty: "500.000",
+    requestedUnit: "m2",
+    exposureAmount: "9595.00",
+    exposureCurrency: "USD",
+    boqAvailableQty: "15065.644",
+    boqSourceNote:
+      "Verified: BOQ MASTER row 98, item MASON-GF-BLK150-098 — 15065.644 m2 available (0 issued), " +
+      "real rate USD 19.19/m2. This line's exposure (500 x 19.19 = USD 9,595.00) was computed at the " +
+      "workbook's own real rate — unlike the golden fixture's concrete line, this one is internally " +
+      "consistent with its cited BOQ source.",
+  });
 
   const [pkg] = await db
     .insert(procurementPackages)

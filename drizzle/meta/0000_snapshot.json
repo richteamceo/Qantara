@@ -1,5 +1,5 @@
 {
-  "id": "8b959fd5-c0d3-4dbf-9256-317e26efa023",
+  "id": "11dbb4fe-92d2-4b7f-b51c-ed6300e06fb4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -745,6 +745,113 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.request_lines": {
+      "name": "request_lines",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "line_no": {
+          "name": "line_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cost_type": {
+          "name": "cost_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "authority_type": {
+          "name": "authority_type",
+          "type": "request_line_authority_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "authority_reference": {
+          "name": "authority_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requested_qty": {
+          "name": "requested_qty",
+          "type": "numeric(18, 3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requested_unit": {
+          "name": "requested_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "exposure_amount": {
+          "name": "exposure_amount",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "exposure_currency": {
+          "name": "exposure_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "boq_available_qty": {
+          "name": "boq_available_qty",
+          "type": "numeric(18, 3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "boq_source_note": {
+          "name": "boq_source_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "request_lines_request_id_requests_id_fk": {
+          "name": "request_lines_request_id_requests_id_fk",
+          "tableFrom": "request_lines",
+          "tableTo": "requests",
+          "columnsFrom": [
+            "request_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.requests": {
       "name": "requests",
       "schema": "",
@@ -780,17 +887,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "quantity": {
-          "name": "quantity",
-          "type": "numeric(18, 3)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "unit": {
-          "name": "unit",
+        "currency": {
+          "name": "currency",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "status": {
           "name": "status",
@@ -800,12 +901,49 @@
           "notNull": true,
           "default": "'DRAFT'"
         },
+        "requested_by": {
+          "name": "requested_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "work_area": {
+          "name": "work_area",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "need_by_date": {
+          "name": "need_by_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "priority": {
+          "name": "priority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "is_demo_data": {
+          "name": "is_demo_data",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "demo_note": {
+          "name": "demo_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -906,6 +1044,14 @@
         "ISSUED",
         "AMENDED",
         "CLOSED"
+      ]
+    },
+    "public.request_line_authority_type": {
+      "name": "request_line_authority_type",
+      "schema": "public",
+      "values": [
+        "BOQ",
+        "EXCEPTION"
       ]
     },
     "public.request_status": {

@@ -1,7 +1,10 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+
 type NavLink = {
   label: string;
   href?: string;
-  badge?: number;
 };
 
 type NavGroup = {
@@ -21,7 +24,7 @@ function groups(projectId: string): NavGroup[] {
     {
       title: "Demand & Procurement",
       links: [
-        { label: "Requests" },
+        { label: "Requests", href: `/app/projects/${projectId}/requests` },
         { label: "Procurement packages" },
         { label: "Bid comparisons" },
         { label: "Awards" },
@@ -50,22 +53,27 @@ function groups(projectId: string): NavGroup[] {
   ];
 }
 
-/** Project/domain panel — APPLICATION_SHELL_AND_NAVIGATION_CONTRACT.md §2. */
+/**
+ * Project/domain panel — APPLICATION_SHELL_AND_NAVIGATION_CONTRACT.md §2.
+ * Active state is derived from the real current route (prefix match, so a
+ * dossier at /requests/:id still highlights "Requests") rather than each
+ * page having to know and pass its own activeHref.
+ */
 export function DomainPanel({
   projectId,
   projectName,
   currency,
   baselineVersion,
   reportingPeriod,
-  activeHref,
 }: {
   projectId: string;
   projectName: string;
   currency: string;
   baselineVersion: string;
   reportingPeriod: string;
-  activeHref: string;
 }) {
+  const pathname = usePathname();
+
   return (
     <nav
       aria-label="Project"
@@ -94,14 +102,14 @@ export function DomainPanel({
             </div>
             <ul>
               {group.links.map((link) => {
-                const isActive = link.href === activeHref;
+                const isActive = !!link.href && (pathname === link.href || pathname?.startsWith(`${link.href}/`));
                 const disabled = !link.href;
                 return (
                   <li key={link.label}>
                     {disabled ? (
                       <span
                         aria-disabled="true"
-                        title={`${link.label} — not yet available (Checkpoint 2+)`}
+                        title={`${link.label} — not yet available (Checkpoint 3+)`}
                         className="flex items-center justify-between rounded-[var(--c1x-radius-control)] px-2 py-1.5 text-sm text-c1x-muted-2/70 cursor-not-allowed"
                       >
                         {link.label}

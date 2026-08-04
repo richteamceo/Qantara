@@ -33,7 +33,6 @@ export default async function ProjectLayout({
       currency={project.currency}
       baselineVersion={baseline?.version ?? "—"}
       reportingPeriod={project.reportingPeriod}
-      activeHref={`/app/projects/${project.reference}/control-room`}
     >
       {children}
     </AppShell>

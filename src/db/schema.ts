@@ -5,6 +5,7 @@ import {
   numeric,
   timestamp,
   integer,
+  boolean,
   pgEnum,
 } from "drizzle-orm/pg-core";
 
@@ -62,6 +63,11 @@ export const paymentVoucherStatusEnum = pgEnum("payment_voucher_status", [
   "DRAFT",
   "APPROVED",
   "PAID",
+]);
+
+export const requestLineAuthorityEnum = pgEnum("request_line_authority_type", [
+  "BOQ",
+  "EXCEPTION",
 ]);
 
 export const organisations = pgTable("organisations", {
@@ -125,10 +131,50 @@ export const requests = pgTable("requests", {
     .references(() => controlAccounts.id),
   reference: text("reference").notNull().unique(),
   controlledEstimate: numeric("controlled_estimate", { precision: 18, scale: 2 }).notNull(),
-  quantity: numeric("quantity", { precision: 18, scale: 3 }),
-  unit: text("unit"),
+  /** Currency of controlledEstimate — see request_lines.exposureCurrency for the same on each line. */
+  currency: text("currency").notNull(),
   status: requestStatusEnum("status").notNull().default("DRAFT"),
+  requestedBy: text("requested_by").notNull(),
+  workArea: text("work_area"),
+  needByDate: timestamp("need_by_date", { withTimezone: true }),
+  priority: text("priority"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  /**
+   * Not every seeded request is the golden transaction fixture. One demo
+   * request is added so the register/dossier have more than a single,
+   * already-fully-advanced row to show real state variety (e.g. the
+   * "Approve & Prepare Package" transition, which the golden request has
+   * already passed). Flagged explicitly rather than silently mixed in —
+   * see CHECKPOINT_2_REPORT.md.
+   */
+  isDemoData: boolean("is_demo_data").notNull().default(false),
+  demoNote: text("demo_note"),
+});
+
+export const requestLines = pgTable("request_lines", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  requestId: uuid("request_id")
+    .notNull()
+    .references(() => requests.id),
+  lineNo: integer("line_no").notNull(),
+  description: text("description").notNull(),
+  costType: text("cost_type").notNull(),
+  authorityType: requestLineAuthorityEnum("authority_type").notNull(),
+  authorityReference: text("authority_reference").notNull(),
+  requestedQty: numeric("requested_qty", { precision: 18, scale: 3 }).notNull(),
+  requestedUnit: text("requested_unit").notNull(),
+  exposureAmount: numeric("exposure_amount", { precision: 18, scale: 2 }).notNull(),
+  exposureCurrency: text("exposure_currency").notNull(),
+  /**
+   * Real "available BOQ quantity" as read from BOQ MASTER at seed time,
+   * where the authorityReference could actually be found there. Null (not
+   * zero) when the line's BOQ code was searched for and not found — a
+   * genuine, disclosed data-integrity finding for the golden fixture's own
+   * pump line (PLANT-SUB-PUMP-031), not a placeholder. See
+   * boqSourceNote for what was actually checked.
+   */
+  boqAvailableQty: numeric("boq_available_qty", { precision: 18, scale: 3 }),
+  boqSourceNote: text("boq_source_note").notNull(),
 });
 
 export const procurementPackages = pgTable("procurement_packages", {

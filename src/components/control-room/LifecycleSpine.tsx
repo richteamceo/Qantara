@@ -2,7 +2,7 @@ import { formatMoney } from "@/lib/format";
 import type { LifecyclePosition } from "@/server/control-room";
 
 /** Region C — Switchback demand-to-settlement control spine (PAGE_01 contract). */
-export function LifecycleSpine({ positions, currency }: { positions: LifecyclePosition[]; currency: string }) {
+export function LifecycleSpine({ positions }: { positions: LifecyclePosition[] }) {
   return (
     <div className="rounded-[var(--c1x-radius-surface)] border border-c1x-line bg-c1x-surface p-3">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-c1x-muted-2">
@@ -19,7 +19,15 @@ export function LifecycleSpine({ positions, currency }: { positions: LifecyclePo
               {i + 1}. {p.label}
             </div>
             <div className="mt-1 c1x-tabular text-sm font-semibold text-c1x-ink">{p.count}</div>
-            <div className="c1x-tabular text-[11px] text-c1x-muted">{formatMoney(p.amount, currency)}</div>
+            <div className="c1x-tabular text-[11px] text-c1x-muted">
+              {p.currency && p.currency !== "MIXED" ? (
+                formatMoney(p.amount, p.currency)
+              ) : p.currency === "MIXED" ? (
+                <span title="Contributors at this position use different currencies">mixed currency</span>
+              ) : (
+                "—"
+              )}
+            </div>
           </li>
         ))}
       </ol>

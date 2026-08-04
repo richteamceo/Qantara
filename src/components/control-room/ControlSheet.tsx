@@ -12,6 +12,10 @@ export function ControlSheet({ rows, currency }: { rows: ControlAccountRow[]; cu
     }),
     { pipeline: 0, awarded: 0, committed: 0, certified: 0 }
   );
+  const pipelineCurrencies = new Set(
+    rows.filter((r) => r.requestPipeline !== 0).map((r) => r.requestPipelineCurrency ?? currency)
+  );
+  const pipelineTotalCurrency = pipelineCurrencies.size <= 1 ? ([...pipelineCurrencies][0] ?? currency) : null;
 
   return (
     <div className="overflow-x-auto rounded-[var(--c1x-radius-surface)] border border-c1x-line bg-c1x-surface">
@@ -48,7 +52,7 @@ export function ControlSheet({ rows, currency }: { rows: ControlAccountRow[]; cu
                   </div>
                 )}
               </td>
-              <td className="c1x-tabular px-3 py-2">{formatMoney(r.requestPipeline, currency)}</td>
+              <td className="c1x-tabular px-3 py-2">{formatMoney(r.requestPipeline, r.requestPipelineCurrency ?? currency)}</td>
               <td className="c1x-tabular px-3 py-2">{formatMoney(r.awardedNotOrdered, currency)}</td>
               <td className="c1x-tabular px-3 py-2">{formatMoney(r.openCommitment, currency)}</td>
               <td className="c1x-tabular px-3 py-2 font-medium text-c1x-teal">
@@ -74,7 +78,9 @@ export function ControlSheet({ rows, currency }: { rows: ControlAccountRow[]; cu
           <tr className="border-t border-c1x-line-strong bg-c1x-surface-soft font-semibold">
             <td className="px-3 py-2">Project total</td>
             <td className="px-3 py-2 text-c1x-muted-2">mixed/see rows</td>
-            <td className="c1x-tabular px-3 py-2">{formatMoney(totals.pipeline, currency)}</td>
+            <td className="c1x-tabular px-3 py-2">
+              {pipelineTotalCurrency ? formatMoney(totals.pipeline, pipelineTotalCurrency) : "mixed/see rows"}
+            </td>
             <td className="c1x-tabular px-3 py-2">{formatMoney(totals.awarded, currency)}</td>
             <td className="c1x-tabular px-3 py-2">{formatMoney(totals.committed, currency)}</td>
             <td className="c1x-tabular px-3 py-2">{formatMoney(totals.certified, currency)}</td>

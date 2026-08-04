@@ -130,7 +130,7 @@ export default async function ControlRoomPage({
       </div>
 
       {/* C. Switchback demand-to-settlement control spine */}
-      <LifecycleSpine positions={data.lifecycle} currency={data.project.currency} />
+      <LifecycleSpine positions={data.lifecycle} />
 
       {/* D. Workspace tabs */}
       <div className="border-b border-c1x-line">

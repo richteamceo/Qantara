@@ -1,0 +1,43 @@
+{
+  "checkpoint": 2,
+  "pages": ["P02 — Requests Register", "P03 — Request Dossier"],
+  "capturedWith": "Playwright (chromium), 2026-08-04",
+  "screenshots": [
+    {
+      "file": "P02/register-1440x900.png",
+      "sha256": "d0aba3682ec5683c44aa893a6f7739ebe727dbe5aff7c973d9070ef938a0f355",
+      "state": "populated, All view, before transition"
+    },
+    {
+      "file": "P02/register-after-transition-1440x900.png",
+      "sha256": "8a03f88b16271a969f3ae2bb28eafb10428f77470808fe2de3ee63c920a24ec7",
+      "state": "populated, All view, after MR-DEMO-0001 Approve & Prepare Package"
+    },
+    {
+      "file": "P02/control-room-after-transition-1440x900.png",
+      "sha256": "248edf4738893cdad7cb1c0a3f08bbf00d95cfcbddac41989f83bf18fed9d876",
+      "state": "Page 01, re-checked after the P03 transition to confirm no regression"
+    },
+    {
+      "file": "P03/dossier-golden-1440x900.png",
+      "sha256": "b07a0a0bd30d14d55e1a408c52b215b2e4b83ff298422d84ee68f0b8b23d2dc4",
+      "state": "MR-SWTBK-2026-0035, Overview tab — Approve & Prepare Package correctly disabled (already allocated)"
+    },
+    {
+      "file": "P03/dossier-demo-lines-tab-1440x900.png",
+      "sha256": "9c4ce3e269d15e66c18335d346974109e51b60915a804a85d9731a1d544ae457",
+      "state": "MR-DEMO-0001, Lines & Allocations tab, before transition"
+    },
+    {
+      "file": "P03/dossier-demo-before-transition-1440x900.png",
+      "sha256": "2f66b824efac82ea6a8b5e6e55acf1e185f4c3ce8dc4c26292e82078e0e75b71",
+      "state": "MR-DEMO-0001, Overview tab, status SUBMITTED, button enabled"
+    },
+    {
+      "file": "P03/dossier-demo-after-transition-1440x900.png",
+      "sha256": "b77462d0b5cd54d105661b1e6dae2d7992242cf42aa438ee376a32a3a7051d1f",
+      "state": "MR-DEMO-0001, Overview tab, status APPROVED, package created, button now disabled"
+    }
+  ],
+  "notesOnMissingStates": "Only the 'populated' state was captured for both pages, plus the live before/after of one real state transition. PAGE_02/PAGE_03's full required-states lists (empty project, search-no-match, filtered-no-match, loading, API failure, partial KPI failure, create-permission-absent, restricted row, stale-result-after-mutation, large-dataset for P02; draft-editing, returned-with-correction, partial-line-approval, exception-expiring, duplicate-warning, cancelled-with-downstream-consequence for P03) are not covered — disclosed gap, not silently implied as covered."
+}

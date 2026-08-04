@@ -9,7 +9,6 @@ export function AppShell({
   currency,
   baselineVersion,
   reportingPeriod,
-  activeHref,
   children,
 }: {
   projectId: string;
@@ -18,7 +17,6 @@ export function AppShell({
   currency: string;
   baselineVersion: string;
   reportingPeriod: string;
-  activeHref: string;
   children: React.ReactNode;
 }) {
   return (
@@ -31,7 +29,6 @@ export function AppShell({
         currency={currency}
         baselineVersion={baselineVersion}
         reportingPeriod={reportingPeriod}
-        activeHref={activeHref}
       />
       <main
         className="min-h-screen"
