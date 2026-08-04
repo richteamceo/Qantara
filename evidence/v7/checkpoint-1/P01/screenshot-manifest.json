@@ -1,0 +1,27 @@
+{
+  "checkpoint": 1,
+  "page": "P01 — Project Commercial Control Room",
+  "route": "/app/projects/SWTBK/control-room",
+  "capturedWith": "Playwright (chromium), 2026-08-04",
+  "screenshots": [
+    {
+      "file": "control-room-1440x900.png",
+      "viewport": { "width": 1440, "height": 900 },
+      "sha256": "47c56904954a538fd5c9140c4e0da3dd00c8bf0ac461f962621b6f1e9b8568c3",
+      "state": "populated / LIVE POSITION / Overview tab"
+    },
+    {
+      "file": "control-room-full.png",
+      "viewport": { "width": 1440, "height": 900, "fullPage": true },
+      "sha256": "4b3e44d907739749af65b47feefa7a1ce0e67d1356bf4fd780973969a18ad0ec",
+      "state": "populated / LIVE POSITION / Overview tab, full scroll"
+    },
+    {
+      "file": "projects-index.png",
+      "viewport": { "width": 1440, "height": 900 },
+      "sha256": "11c0a9f6e354628e08454a9d6dd26c21c27890f9df804312e2de787cc7ad7050",
+      "state": "root Projects index"
+    }
+  ],
+  "notesOnMissingStates": "Only the 'populated / LIVE' state was captured this checkpoint. PAGE_01 contract §Required states also lists: certified, no certified period, no transactions, incomplete baseline, stale forecast, reconciliation failure, permission-restricted finance data, loading, recoverable error — none of these have seed fixtures or UI branches built yet. This is a disclosed gap, not an omission to be inferred as covered."
+}

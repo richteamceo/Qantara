@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+/*
+ * Tokens copied verbatim from
+ * 06_MACHINE_READABLE/design-tokens-v7.json (version 7.0.0).
+ * CORE1X is a fixed enterprise surface, not a user light/dark toggle.
+ */
+:root {
+  --c1x-canvas: #f3f5f9;
+  --c1x-surface: #ffffff;
+  --c1x-surface-soft: #f8f9fc;
+  --c1x-line: #dde2ea;
+  --c1x-line-strong: #c9d0dc;
+  --c1x-ink: #111827;
+  --c1x-muted: #667085;
+  --c1x-muted-2: #8993a4;
+  --c1x-navy: #07192f;
+  --c1x-navy-2: #102a4c;
+  --c1x-blue: #3267e8;
+  --c1x-blue-soft: #edf3ff;
+  --c1x-indigo: #5949d8;
+  --c1x-teal: #0d9488;
+  --c1x-green: #159b68;
+  --c1x-amber: #c98512;
+  --c1x-red: #d63c50;
+
+  --c1x-rail-w: 64px;
+  --c1x-domain-w: 236px;
+  --c1x-persistent-left-w: 300px;
+  --c1x-topbar-h: 66px;
+  --c1x-page-padding: 20px;
+  --c1x-sidecar-w: 286px;
+
+  --c1x-radius-control: 8px;
+  --c1x-radius-surface: 9px;
+
+  --c1x-control-h: 36px;
+  --c1x-search-h: 38px;
+  --c1x-compact-nav-min-h: 31px;
+
+  --c1x-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 26px rgba(15, 23, 42, 0.04);
+  --c1x-focus: 3px solid rgba(50, 103, 232, 0.25);
+}
+
+@theme inline {
+  --color-c1x-canvas: var(--c1x-canvas);
+  --color-c1x-surface: var(--c1x-surface);
+  --color-c1x-surface-soft: var(--c1x-surface-soft);
+  --color-c1x-line: var(--c1x-line);
+  --color-c1x-line-strong: var(--c1x-line-strong);
+  --color-c1x-ink: var(--c1x-ink);
+  --color-c1x-muted: var(--c1x-muted);
+  --color-c1x-muted-2: var(--c1x-muted-2);
+  --color-c1x-navy: var(--c1x-navy);
+  --color-c1x-navy-2: var(--c1x-navy-2);
+  --color-c1x-blue: var(--c1x-blue);
+  --color-c1x-blue-soft: var(--c1x-blue-soft);
+  --color-c1x-indigo: var(--c1x-indigo);
+  --color-c1x-teal: var(--c1x-teal);
+  --color-c1x-green: var(--c1x-green);
+  --color-c1x-amber: var(--c1x-amber);
+  --color-c1x-red: var(--c1x-red);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--c1x-canvas);
+  color: var(--c1x-ink);
+  font-feature-settings: "tnum" 1;
+}
+
+.c1x-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.c1x-focusable:focus-visible {
+  outline: var(--c1x-focus);
+  outline-offset: 2px;
+  border-radius: var(--c1x-radius-control);
+}
