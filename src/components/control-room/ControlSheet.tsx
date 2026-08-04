@@ -5,14 +5,12 @@ import type { ControlAccountRow } from "@/server/control-room";
 export function ControlSheet({ rows, currency }: { rows: ControlAccountRow[]; currency: string }) {
   const totals = rows.reduce(
     (acc, r) => ({
-      budget: acc.budget + r.currentBudget,
       pipeline: acc.pipeline + r.requestPipeline,
       awarded: acc.awarded + r.awardedNotOrdered,
       committed: acc.committed + r.openCommitment,
       certified: acc.certified + r.certifiedActual,
-      variance: acc.variance + r.variance,
     }),
-    { budget: 0, pipeline: 0, awarded: 0, committed: 0, certified: 0, variance: 0 }
+    { pipeline: 0, awarded: 0, committed: 0, certified: 0 }
   );
 
   return (
@@ -42,7 +40,14 @@ export function ControlSheet({ rows, currency }: { rows: ControlAccountRow[]; cu
                 <div className="font-medium text-c1x-ink">{r.name}</div>
                 <div className="text-[11px] text-c1x-muted-2">{r.code}</div>
               </td>
-              <td className="c1x-tabular px-3 py-2">{formatMoney(r.currentBudget, currency)}</td>
+              <td className="px-3 py-2">
+                <div className="c1x-tabular">{formatMoney(r.currentBudget, r.budgetCurrency)}</div>
+                {r.budgetCurrency !== currency && (
+                  <div className="text-[11px] text-c1x-amber" title={r.budgetSource ?? undefined}>
+                    native {r.budgetCurrency}, not {currency}
+                  </div>
+                )}
+              </td>
               <td className="c1x-tabular px-3 py-2">{formatMoney(r.requestPipeline, currency)}</td>
               <td className="c1x-tabular px-3 py-2">{formatMoney(r.awardedNotOrdered, currency)}</td>
               <td className="c1x-tabular px-3 py-2">{formatMoney(r.openCommitment, currency)}</td>
@@ -50,11 +55,17 @@ export function ControlSheet({ rows, currency }: { rows: ControlAccountRow[]; cu
                 {formatMoney(r.certifiedActual, currency)}
               </td>
               <td className="px-3 py-2 text-c1x-muted-2">Incomplete</td>
-              <td
-                className={`c1x-tabular px-3 py-2 font-medium ${r.variance < 0 ? "text-c1x-red" : "text-c1x-green"}`}
-              >
-                {formatMoney(r.variance, currency)}
-              </td>
+              {r.variance.status === "computed" ? (
+                <td
+                  className={`c1x-tabular px-3 py-2 font-medium ${r.variance.value.amount < 0 ? "text-c1x-red" : "text-c1x-green"}`}
+                >
+                  {formatMoney(r.variance.value.amount, r.variance.value.currency)}
+                </td>
+              ) : (
+                <td className="px-3 py-2 text-xs text-c1x-amber" title={r.variance.reason}>
+                  Incomplete — cross-currency
+                </td>
+              )}
               <td className="px-3 py-2 text-c1x-muted">{r.activeGate}</td>
             </tr>
           ))}
@@ -62,13 +73,13 @@ export function ControlSheet({ rows, currency }: { rows: ControlAccountRow[]; cu
         <tfoot>
           <tr className="border-t border-c1x-line-strong bg-c1x-surface-soft font-semibold">
             <td className="px-3 py-2">Project total</td>
-            <td className="c1x-tabular px-3 py-2">{formatMoney(totals.budget, currency)}</td>
+            <td className="px-3 py-2 text-c1x-muted-2">mixed/see rows</td>
             <td className="c1x-tabular px-3 py-2">{formatMoney(totals.pipeline, currency)}</td>
             <td className="c1x-tabular px-3 py-2">{formatMoney(totals.awarded, currency)}</td>
             <td className="c1x-tabular px-3 py-2">{formatMoney(totals.committed, currency)}</td>
             <td className="c1x-tabular px-3 py-2">{formatMoney(totals.certified, currency)}</td>
             <td className="px-3 py-2 text-c1x-muted-2">—</td>
-            <td className="c1x-tabular px-3 py-2">{formatMoney(totals.variance, currency)}</td>
+            <td className="px-3 py-2 text-c1x-muted-2">see rows</td>
             <td className="px-3 py-2" />
           </tr>
         </tfoot>

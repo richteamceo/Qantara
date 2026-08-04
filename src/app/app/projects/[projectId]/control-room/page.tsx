@@ -201,10 +201,9 @@ export default async function ControlRoomPage({
               </h2>
               <ControlSheet rows={data.accounts} currency={data.project.currency} />
               <p className="mt-1 text-[11px] text-c1x-amber">
-                Known gap: Current budget is seeded net of tax while commitment/certified columns are gross
-                (tax-inclusive), so Variance mixes bases and should not be read as a true cost overrun yet — a
-                tax-consistent budget figure was not available from the workbook this checkpoint. See evidence
-                report.
+                Known gap: Current budget is sourced from the real BOQ MASTER sheet (native currency USD); the
+                request/award/PO/PV chain is transacted in GHS. Variance is intentionally not computed across that
+                mismatch rather than guessed — see CHECKPOINT_1_ADDENDUM.md.
               </p>
             </div>
           </div>

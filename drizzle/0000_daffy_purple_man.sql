@@ -30,7 +30,9 @@ CREATE TABLE "control_accounts" (
 	"project_id" uuid NOT NULL,
 	"code" text NOT NULL,
 	"name" text NOT NULL,
-	"current_budget" numeric(18, 2) NOT NULL
+	"current_budget" numeric(18, 2) NOT NULL,
+	"currency" text NOT NULL,
+	"budget_source" text
 );
 --> statement-breakpoint
 CREATE TABLE "finance_validations" (

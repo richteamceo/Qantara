@@ -100,6 +100,19 @@ export const controlAccounts = pgTable("control_accounts", {
   code: text("code").notNull(),
   name: text("name").notNull(),
   currentBudget: numeric("current_budget", { precision: 18, scale: 2 }).notNull(),
+  /**
+   * Budget's own native currency, as sourced from the BOQ MASTER sheet of
+   * Cost Control System.xlsm — which is USD-denominated throughout,
+   * independent of the project's GHS reporting currency. Money arithmetic
+   * across currencies requires an explicit, dated exchange rate
+   * (CANONICAL_DOMAIN_MODEL_V7_DELTA.md §4;
+   * MULTI_CURRENCY_CONTRACT_AND_REPORTING_STANDARD.md — "never hardcoded,
+   * never silently defaulted"), which this build does not have a live
+   * source for. So this is tracked per-account rather than assumed equal
+   * to the project currency.
+   */
+  currency: text("currency").notNull(),
+  budgetSource: text("budget_source"),
 });
 
 export const requests = pgTable("requests", {

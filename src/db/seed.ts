@@ -16,14 +16,32 @@ import {
 
 /**
  * Seeds exactly the golden transaction fixture from
- * 06_MACHINE_READABLE/golden-transaction-fixture.json — no invented
- * additional requests/accounts. Two disclosed placeholders (not present
- * in the fixture, not sourced from the Switchback workbook this
- * checkpoint):
- *  - control account budget is set equal to the single seeded request's
- *    controlled estimate (no independent BOQ budget figure was extracted
- *    from the workbook yet);
- *  - baseline approval date and reporting cut-off dates are placeholders.
+ * 06_MACHINE_READABLE/golden-transaction-fixture.json (request through
+ * payment voucher) — no invented amounts there.
+ *
+ * The control account's budget is now sourced from the real BOQ MASTER
+ * sheet of "Cost Control System.xlsm": all 49 rows with
+ * TRADE NAME = "Structural Concrete" (item codes CONC-SUB-BLIND-008
+ * through CONC-RF-SLABBEAM-056), summing BUDGET AMOUNT (USD).
+ * Total re-derived directly from the workbook: USD 1,204,144.03 across
+ * 8,364.904 m3. That sheet is entirely USD-denominated (see
+ * ⚙ SETTINGS: "Currency: USD — US Dollar", Contract Value USD
+ * 3,978,702.90) — there is no GHS figure in it, and no row/reference in
+ * the workbook matches the golden fixture's 240 m3 / GHS 1,382,400
+ * request (searched all 103 sheets for every fixture reference and
+ * amount — zero hits). The fixture is a synthetic illustrative
+ * transaction layered onto a real project, not a literal extract of it.
+ *
+ * Rather than invent an exchange rate to force a single GHS number (the
+ * pack's own MULTI_CURRENCY_CONTRACT_AND_REPORTING_STANDARD.md is
+ * explicit that USD/GHS conversion requires a real, dated rate — "never
+ * hardcoded, never silently defaulted"), the account's budget is stored
+ * in its real native currency (USD) and the aggregation layer keeps it
+ * separate from the GHS-denominated commitment/certified figures rather
+ * than silently combining them. See CHECKPOINT_1_ADDENDUM.md.
+ *
+ * Remaining disclosed placeholder: baseline approval date and reporting
+ * cut-off dates (not given anywhere in the fixture or the workbook).
  */
 async function seed() {
   const [org] = await db
@@ -57,9 +75,14 @@ async function seed() {
     .insert(controlAccounts)
     .values({
       projectId: project.id,
-      code: "CA-CONCRETE",
-      name: "Ready-Mix Concrete Supply",
-      currentBudget: "1382400.00",
+      code: "TRADE-CONC-STRUCT",
+      name: "Structural Concrete (BOQ trade rollup)",
+      currentBudget: "1204144.03",
+      currency: "USD",
+      budgetSource:
+        "Cost Control System.xlsm > \u{1F4D0} BOQ MASTER, sum of BUDGET AMOUNT (USD) " +
+        "where TRADE NAME = 'Structural Concrete' (49 rows, CONC-SUB-BLIND-008..CONC-RF-SLABBEAM-056, " +
+        "8364.904 m3 total). Extracted 2026-08-04.",
     })
     .returning();
 

@@ -1,5 +1,5 @@
 {
-  "id": "573dfef1-3064-4f61-96ab-8444da2f2ac7",
+  "id": "8b959fd5-c0d3-4dbf-9256-317e26efa023",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -184,6 +184,18 @@
           "type": "numeric(18, 2)",
           "primaryKey": false,
           "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "budget_source": {
+          "name": "budget_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

@@ -2,6 +2,12 @@
 
 Using the template in `05_CLAUDE_CODE_EXECUTION/OWNER_CHECKPOINT_REPORT_TEMPLATE.md`.
 
+> **See also `CHECKPOINT_1_ADDENDUM.md`** — the budget/variance gap
+> described in §7 and §16 below (net-vs-gross placeholder) has since been
+> superseded: the budget is now sourced from the real BOQ MASTER sheet.
+> This report is left as-written (append-only) rather than edited after
+> the fact; the addendum records what changed and why.
+
 1. **Checkpoint/page:** Checkpoint 1 — application shell + P01 (Project Commercial Control Room).
 2. **Branch and commit:** `claude/design-authority-review-azeq82`, on top of the Gate 0 intake commit (`7a18165`).
 3. **Production files changed:** everything under `src/`, `drizzle/`, `evidence/v7/checkpoint-1/`, plus `package.json`, `drizzle.config.ts`, `next.config.ts`, `.gitignore` — this is the first real application code in the repository (previously empty, per the Gate 0 report).

@@ -2,19 +2,19 @@
   "checkpoint": 1,
   "page": "P01 — Project Commercial Control Room",
   "route": "/app/projects/SWTBK/control-room",
-  "capturedWith": "Playwright (chromium), 2026-08-04",
+  "capturedWith": "Playwright (chromium), 2026-08-04 (re-captured after BOQ-sourced budget fix)",
   "screenshots": [
     {
       "file": "control-room-1440x900.png",
       "viewport": { "width": 1440, "height": 900 },
-      "sha256": "47c56904954a538fd5c9140c4e0da3dd00c8bf0ac461f962621b6f1e9b8568c3",
-      "state": "populated / LIVE POSITION / Overview tab"
+      "sha256": "4a4343accf8c0a9a4624290dc31efba11cc4e1f9245fec3d84791c00856ae5f3",
+      "state": "populated / LIVE POSITION / Overview tab / BOQ-sourced budget"
     },
     {
       "file": "control-room-full.png",
       "viewport": { "width": 1440, "height": 900, "fullPage": true },
-      "sha256": "4b3e44d907739749af65b47feefa7a1ce0e67d1356bf4fd780973969a18ad0ec",
-      "state": "populated / LIVE POSITION / Overview tab, full scroll"
+      "sha256": "2400840123f515eeecb6337d7674c3e668c38dc9bb9e4fc9447de260a408af31",
+      "state": "populated / LIVE POSITION / Overview tab, full scroll / BOQ-sourced budget"
     },
     {
       "file": "projects-index.png",

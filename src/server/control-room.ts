@@ -44,11 +44,13 @@ export type ControlAccountRow = {
   code: string;
   name: string;
   currentBudget: number;
+  budgetCurrency: string;
+  budgetSource: string | null;
   requestPipeline: number;
   awardedNotOrdered: number;
   openCommitment: number;
   certifiedActual: number;
-  variance: number;
+  variance: MetricValue;
   activeGate: string;
 };
 
@@ -245,6 +247,15 @@ export async function getControlRoomData(
     perAccount.set(r.controlAccountId, bucket);
   }
 
+  // Every request/package/award/PO/PV column below is transacted in the
+  // project's own reporting currency (there is no per-transaction currency
+  // field yet — a real gap, see CHECKPOINT_1_ADDENDUM.md). Control-account
+  // budgets, by contrast, are sourced straight from the BOQ MASTER sheet in
+  // their own native currency, which is not guaranteed to match. Money
+  // arithmetic across currencies requires an explicit, dated exchange rate
+  // (CANONICAL_DOMAIN_MODEL_V7_DELTA.md §4) that this build does not have a
+  // live source for — so budget-vs-commitment variance is only computed
+  // when the two currencies actually match, never silently subtracted.
   const accountRows: ControlAccountRow[] = accounts.map((a) => {
     const b = perAccount.get(a.id) ?? {
       requestPipeline: 0,
@@ -254,26 +265,44 @@ export async function getControlRoomData(
     };
     const budget = Number(a.currentBudget);
     const committedTotal = b.requestPipeline + b.awardedNotOrdered + b.openCommitment + b.certifiedActual;
+    const variance: MetricValue =
+      a.currency === project.currency
+        ? {
+            status: "computed",
+            value: { amount: budget - committedTotal, currency: a.currency },
+            basis: "Budget minus pipeline + awarded-not-ordered + open commitment + certified actual",
+          }
+        : {
+            status: "incomplete",
+            reason: `Budget is ${a.currency}; commitment/certified figures are ${project.currency}. No dated exchange rate is available to convert, so no variance is computed (not shown as zero).`,
+          };
     return {
       id: a.id,
       code: a.code,
       name: a.name,
       currentBudget: budget,
+      budgetCurrency: a.currency,
+      budgetSource: a.budgetSource,
       requestPipeline: b.requestPipeline,
       awardedNotOrdered: b.awardedNotOrdered,
       openCommitment: b.openCommitment,
       certifiedActual: b.certifiedActual,
-      variance: budget - committedTotal,
+      variance,
       activeGate: b.certifiedActual > 0 ? "Fulfilment / PV & Settle" : b.awardedNotOrdered + b.openCommitment > 0 ? "Order & Commit" : "Demand & BOQ gate",
     };
   });
 
-  const totalBudget = accountRows.reduce((s, a) => s + a.currentBudget, 0);
   const totalCertified = accountRows.reduce((s, a) => s + a.certifiedActual, 0);
   const totalOpenCommitment = accountRows.reduce((s, a) => s + a.openCommitment, 0);
   const totalAwardedNotOrdered = accountRows.reduce((s, a) => s + a.awardedNotOrdered, 0);
 
   const currency = project.currency;
+
+  // Budget KPI: sum only if every account shares one currency; otherwise
+  // don't silently blend currencies into one misleading number.
+  const budgetCurrencies = new Set(accountRows.map((a) => a.budgetCurrency));
+  const totalBudget = accountRows.reduce((s, a) => s + a.currentBudget, 0);
+  const budgetCurrency = budgetCurrencies.size === 1 ? [...budgetCurrencies][0] : null;
 
   const readiness: ReadinessCheck[] = [
     {
@@ -295,6 +324,14 @@ export async function getControlRoomData(
       label: "Quantity provenance",
       status: rows.every((r) => r.controlledEstimate) ? "pass" : "fail",
       detail: "Every request line carries a controlled estimate with quantity/unit",
+    },
+    {
+      key: "budget-currency-consistency",
+      label: "Budget currency matches transaction currency",
+      status: accountRows.every((a) => a.budgetCurrency === project.currency) ? "pass" : "fail",
+      detail: accountRows.every((a) => a.budgetCurrency === project.currency)
+        ? "All control-account budgets share the project's reporting currency"
+        : `Budget sourced from BOQ MASTER is ${[...budgetCurrencies].join("/")}; project reporting currency is ${project.currency} — variance not computed until a dated exchange rate is available`,
     },
     {
       key: "forecast-freshness",
@@ -327,11 +364,20 @@ export async function getControlRoomData(
     },
     reportingPeriod: project.reportingPeriod,
     position: {
-      currentApprovedBudget: {
-        status: "computed",
-        value: { amount: totalBudget, currency },
-        basis: "Sum of control-account current budgets at latest approved baseline",
-      },
+      currentApprovedBudget:
+        budgetCurrency !== null
+          ? {
+              status: "computed",
+              value: { amount: totalBudget, currency: budgetCurrency },
+              basis:
+                budgetCurrency === currency
+                  ? "Sum of control-account current budgets, sourced from BOQ MASTER"
+                  : `Sum of control-account current budgets, sourced from BOQ MASTER in their native currency (${budgetCurrency}) — differs from the project's ${currency} reporting currency; not converted without a dated exchange rate`,
+            }
+          : {
+              status: "incomplete",
+              reason: "Control accounts have mixed budget currencies — not summed into one misleading figure",
+            },
       certifiedActual: {
         status: "computed",
         value: { amount: totalCertified, currency },
