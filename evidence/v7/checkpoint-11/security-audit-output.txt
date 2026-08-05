@@ -1,0 +1,23 @@
+=== 1. Secret scanning (gitleaks, full git history) ===
+
+    ○
+    │╲
+    │ ○
+    ○ ░
+    ░    gitleaks
+
+[90m3:33PM[0m [32mINF[0m 12 commits scanned.
+[90m3:33PM[0m [32mINF[0m scan completed in 273ms
+[90m3:33PM[0m [32mINF[0m no leaks found
+PASS — no secrets found
+
+=== 2. Raw/string-concatenated SQL in application code ===
+PASS — zero raw sql` usage in src/ (all application queries go through Drizzle's parameterized query builder)
+
+=== 3. dangerouslySetInnerHTML / eval usage ===
+PASS — zero dangerouslySetInnerHTML/eval/Function-constructor usage
+
+=== 4. Dependency vulnerability scan (production dependencies only) ===
+found 0 vulnerabilities
+
+=== ALL CHECKS PASSED ===

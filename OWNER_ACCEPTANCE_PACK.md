@@ -1,6 +1,6 @@
 # CORE1X — Owner Acceptance Pack
 
-Consolidated summary across Checkpoints 0–10. Checkpoints 0–7 follow
+Consolidated summary across Checkpoints 0–11. Checkpoints 0–7 follow
 `05_CLAUDE_CODE_EXECUTION/CONTROLLED_BUILD_AND_CHECKPOINT_PROGRAMME.md`,
 which ends at Checkpoint 7; Checkpoint 8 is self-scoped (see
 `CHECKPOINT_8_REPORT.md` §1) since the pack does not define what comes
@@ -30,6 +30,7 @@ check as of Checkpoint 7.
 | 8 | Self-scoped: real PDF generation for PO/PV, export audit logging | `CHECKPOINT_8_REPORT.md` |
 | 9 | Self-scoped: backup/restore drill with corruption-detection proof | `CHECKPOINT_9_REPORT.md` |
 | 10 | Self-scoped: measured performance/N+1 query audit across all 9 pages | `CHECKPOINT_10_REPORT.md` |
+| 11 | Self-scoped: security audit (secrets, injection, XSS, dependencies) | `CHECKPOINT_11_REPORT.md` |
 
 Every checkpoint's status is **NOT OWNER-ACCEPTED**. This pack does not
 change that — it is a navigation aid for review, not a self-certification.
@@ -84,6 +85,7 @@ already disclosed individually in their originating checkpoint report:
 | Pre-existing dev-only `esbuild`/`drizzle-kit` moderate advisory | CP8 (found) | Dev-server-only, not shipped in the app; fix requires a breaking `drizzle-kit` downgrade — not applied, see CHECKPOINT_8_REPORT.md §15 |
 | Backup/restore only drilled against a local single-node Postgres | CP9 | Mechanism (backup, restore, reconciliation, corruption-detection) proven for real; the pack's 4-hour RTO / 15-minute RPO targets at production Multi-AZ scale are not — no continuous point-in-time-recovery/WAL archiving exists in this sandbox |
 | P06 Finance Validation re-fetches the entire project's control-room dataset for one KPI | CP10 (found) | Deliberate reuse-over-duplication trade-off, disclosed in code since it was written; doesn't scale with any single page's data, only with total project-wide request count — currently negligible (2 requests) |
+| No real auth/MFA/SSO, session/token management, rate limiting, secrets vault, upload scanning, or external pen test | CP1 (auth), CP11 (rest, found/confirmed still missing) | All require real managed infrastructure this sandbox doesn't have; CP11 verified the concretely-checkable subset (secrets, injection, XSS, dependency CVEs) is clean instead |
 
 ## 5. Verification performed
 
@@ -93,6 +95,7 @@ already disclosed individually in their originating checkpoint report:
 - No automated test suite exists at any checkpoint (disclosed gap, every report).
 - Checkpoint 9 additionally: a live backup/restore/reconciliation drill including a simulated data-corruption incident, proving the reconciliation check correctly fails on real corruption (not just passes on clean data) before demonstrating full recovery (`evidence/v7/checkpoint-9/disaster-recovery-drill-transcript.md`).
 - Checkpoint 10 additionally: a real per-request SQL query counter (not a code-review assertion) measuring every page's query count against the golden fixture, confirming no N+1 pattern exists anywhere in the build (`evidence/v7/checkpoint-10/performance-audit-output.txt`).
+- Checkpoint 11 additionally: a real secret-scan (gitleaks, full git history), SQL-injection/XSS code audit, and dependency vulnerability scan (`evidence/v7/checkpoint-11/security-audit-output.txt`) — all clean; the actor-role cookie was hardened to `httpOnly`.
 
 ## 6. Reproduction
 
@@ -121,6 +124,6 @@ unaccepted page slice in implementation").
 
 Owner acceptance (to be completed by the owner, not by Claude Code):
 
-- [ ] Reviewed and accepted: Checkpoints 0–10
+- [ ] Reviewed and accepted: Checkpoints 0–11
 - Signed:
 - Date:

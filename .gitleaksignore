@@ -1,0 +1,10 @@
+# SECURITY_AND_ACCESS_CONTROL_STANDARD.md — secret-scanning hook.
+# Each entry below is a verified false positive: gitleaks' generic-api-key
+# rule flags high-entropy-looking strings, and these are real BOQ
+# cost-code authority references from the source workbook (e.g.
+# "MASON-GF-BLK150-098"), not credentials. Verified by reading the
+# surrounding code (they are all `authorityReference:` fields in
+# src/db/seed.ts) — see CHECKPOINT_11_REPORT.md §7.
+999107735ec8381c0e0bf97bd83b0f5cf9f52e98:src/db/seed.ts:generic-api-key:235
+654f5944990b17a862a85c2fdbb83e80ee56b432:src/db/seed.ts:generic-api-key:137
+654f5944990b17a862a85c2fdbb83e80ee56b432:src/db/seed.ts:generic-api-key:220

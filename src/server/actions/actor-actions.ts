@@ -13,7 +13,13 @@ import { ROLES, ACTOR_ROLE_COOKIE, type Role } from "@/lib/auth";
 export async function setActorRole(role: string): Promise<{ ok: boolean }> {
   if (!(ROLES as readonly string[]).includes(role)) return { ok: false };
   const store = await cookies();
-  store.set(ACTOR_ROLE_COOKIE, role as Role, { path: "/", sameSite: "lax" });
+  // httpOnly: nothing in this app reads document.cookie client-side (the
+  // RoleSwitcher receives its value as a server-rendered prop) — no
+  // functional reason for the cookie to be script-readable, so it isn't
+  // (SECURITY_AND_ACCESS_CONTROL_STANDARD.md session-cookie posture,
+  // applied here even though this cookie is a disclosed simulated-identity
+  // switcher, not a real session token).
+  store.set(ACTOR_ROLE_COOKIE, role as Role, { path: "/", sameSite: "lax", httpOnly: true });
   revalidatePath("/", "layout");
   return { ok: true };
 }

@@ -1,0 +1,12 @@
+{
+  "checkpoint": 11,
+  "pages": ["Security audit: secrets, injection, XSS, dependencies (self-scoped — see CHECKPOINT_11_REPORT.md §1)"],
+  "capturedWith": "Real gitleaks binary + npm audit + grep-based code scan + Playwright cookie inspection, 2026-08-05",
+  "artifacts": [
+    { "file": "security-audit-output.txt", "sha256": "53d6f7a75ea94eb2eaa178631100d703c130a444161fc06be25376b3f41c73e3", "note": "Full real output of scripts/security-audit.sh: gitleaks (full git history, 12 commits scanned, 0 leaks after 3 verified-false-positive BOQ codes were allowlisted), raw-SQL grep, XSS-sink grep, npm audit --omit=dev — all 4 checks PASS" }
+  ],
+  "screenshots": [
+    { "file": "role-switch-after-httponly-1440x900.png", "sha256": "e738c8b39a0973c25b625ad9142276a81b1db513f2383cfc9ea66a0c2fa08c91", "state": "Role switcher exercised live after making the actor-role cookie httpOnly — Playwright's own cookie inspection (logged alongside this screenshot) confirms httpOnly:true, secure:false (local HTTP dev only), sameSite:Lax at the real network layer, and the UI still correctly reflects 'Acting as Finance Reviewer'" }
+  ],
+  "notesOnMissingStates": "SECURITY_AND_ACCESS_CONTROL_STANDARD.md's much larger scope (MFA, SSO, session/refresh-token rotation, rate limiting, at-rest/in-transit encryption beyond local Postgres defaults, secrets vault, upload/malware scanning, external penetration testing, access recertification) requires real managed infrastructure this sandbox does not have and is explicitly out of scope — see CHECKPOINT_11_REPORT.md §1 for the concretely-checkable subset this checkpoint covers instead."
+}
