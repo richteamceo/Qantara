@@ -66,12 +66,10 @@ export default async function AwardDecisionPage({
               </span>
               {data.financeReference ? (
                 <a
-                  href="#"
-                  aria-disabled="true"
-                  title="Finance Validation page not built yet (Checkpoint 4+)"
-                  className="c1x-focusable cursor-not-allowed rounded-[var(--c1x-radius-control)] bg-c1x-line px-3 py-1.5 text-xs text-c1x-muted-2"
+                  href={`/app/projects/${data.project.reference}/finance-validations/${data.financeReference}`}
+                  className="c1x-focusable rounded-[var(--c1x-radius-control)] bg-c1x-blue px-3 py-1.5 text-xs font-medium text-white"
                 >
-                  {data.financeReference} (view — soon)
+                  Open {data.financeReference}
                 </a>
               ) : (
                 <ApproveSendToFinanceButton

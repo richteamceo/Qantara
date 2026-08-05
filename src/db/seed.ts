@@ -224,7 +224,7 @@ async function seed() {
     })
     .returning();
 
-  await db
+  const [demoLine] = await db
     .insert(requestLines)
     .values({
       requestId: demoRequest.id,
@@ -393,6 +393,70 @@ async function seed() {
     technicallyCompliant: true,
   });
 
+  // Demo award — the "Open/Prepare Award Decision" outcome proven live in
+  // Checkpoint 3, now part of the seed baseline (same pattern as the
+  // package above). Reference is deterministic here (PPK-DEMO-0001's live
+  // test produced a random-suffixed one; not reproduced).
+  const [demoAward] = await db
+    .insert(awardDecisions)
+    .values({
+      packageId: demoPkg.id,
+      reference: "AWD-DEMO-0001",
+      supplier: "SAFE GLOBAL (NR-GH-SP-037)",
+      net: "9595.00",
+      currency: "USD",
+      saving: "0.00",
+      status: "SENT_TO_FINANCE",
+      competitionResult: "Sole source — 1 quotation received",
+      deviationCode: "SOLE_SOURCE",
+      deviationReason:
+        "Single quotation received (sole source, Sole Source); no competitive comparison available.",
+    })
+    .returning();
+
+  await db.insert(awardLines).values({
+    awardId: demoAward.id,
+    requestLineId: demoLine.id,
+    lineNo: 1,
+    description: "150mm hollow concrete block — GF walls (general)",
+    quantity: "500.000",
+    unit: "m2",
+    rate: "19.1900",
+    netAmount: "9595.00",
+    currency: "USD",
+  });
+
+  // Demo Finance Validation — the "Approve & Send to Finance" outcome
+  // proven live in Checkpoint 3, now part of the seed baseline, but with
+  // its tax formula CORRECTED per PAGE_06_FINANCE_VALIDATION.md's own
+  // worked fixture (discovered in Checkpoint 4): WHT is 2% of net at the
+  // payable event, not the workbook SETTINGS sheet's general 5% WHT rate
+  // used as an approximation in Checkpoint 3. VAT 15% / NHIL 2.5% /
+  // GETFund 2.5% match the workbook's real published rates and this
+  // page's own fixture. Status PENDING (not yet locked) so Checkpoint 4's
+  // own "Validate & Lock Route" transition has something real to exercise.
+  const demoNet = 9595;
+  const demoVat = Math.round(demoNet * 0.15 * 100) / 100;
+  const demoNhil = Math.round(demoNet * 0.025 * 100) / 100;
+  const demoGetfund = Math.round(demoNet * 0.025 * 100) / 100;
+  const demoGross = Math.round((demoNet + demoVat + demoNhil + demoGetfund) * 100) / 100;
+  const demoWht = Math.round(demoNet * 0.02 * 100) / 100;
+  const demoNetPayable = Math.round((demoGross - demoWht) * 100) / 100;
+
+  await db.insert(financeValidations).values({
+    awardId: demoAward.id,
+    reference: "FV-DEMO-0001",
+    route: "CREDIT",
+    grossOrderValue: demoGross.toFixed(2),
+    currency: "USD",
+    vatAmount: demoVat.toFixed(2),
+    nhilAmount: demoNhil.toFixed(2),
+    getfundAmount: demoGetfund.toFixed(2),
+    whtAmount: demoWht.toFixed(2),
+    netPayable: demoNetPayable.toFixed(2),
+    status: "PENDING",
+  });
+
   const [fv] = await db
     .insert(financeValidations)
     .values({
@@ -401,6 +465,14 @@ async function seed() {
       route: "CREDIT",
       grossOrderValue: "1639152.00",
       currency: "GHS",
+      // Real formula-bridge breakdown per PAGE_06_FINANCE_VALIDATION.md:
+      // VAT 15% = 204,894; NHIL 2.5% = 34,149; GETFund 2.5% = 34,149;
+      // sum = 1,639,152 (reconciles exactly to the seeded gross above).
+      // WHT indicative 2% of net at payable event = 27,319.
+      vatAmount: "204894.00",
+      nhilAmount: "34149.00",
+      getfundAmount: "34149.00",
+      whtAmount: "27319.00",
       netPayable: "1611833.00",
       status: "VALIDATED",
       validatedAt: new Date("2026-08-01T09:00:00Z"),
@@ -414,6 +486,7 @@ async function seed() {
       reference: "PO-2026-041",
       net: "1365960.00",
       gross: "1639152.00",
+      currency: "GHS",
       status: "ISSUED",
       issuedAt: new Date("2026-08-02T10:00:00Z"),
     })

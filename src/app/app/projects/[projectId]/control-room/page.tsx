@@ -169,33 +169,38 @@ export default async function ControlRoomPage({
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row">
           <div className="flex flex-1 flex-col gap-4">
-            {/* E. Exposure composition */}
-            <ExposureDonut
-              certifiedActual={
-                position.certifiedActual.status === "computed" ? position.certifiedActual.value.amount : 0
-              }
-              openCommitments={
-                position.openCommitments.status === "computed" ? position.openCommitments.value.amount : 0
-              }
-              approvedNotOrdered={
-                position.approvedNotOrdered.status === "computed" &&
-                position.approvedNotOrdered.value.currency === data.project.currency
-                  ? position.approvedNotOrdered.value.amount
-                  : 0
-              }
-              currency={data.project.currency}
-              excluded={
-                position.approvedNotOrdered.status === "computed" &&
-                position.approvedNotOrdered.value.currency !== data.project.currency
-                  ? [
-                      {
-                        label: "Approved not ordered",
-                        reason: `${position.approvedNotOrdered.value.currency} ${position.approvedNotOrdered.value.amount.toLocaleString()}`,
-                      },
-                    ]
-                  : []
-              }
-            />
+            {/* E. Exposure composition — any contributor whose currency doesn't
+                match the project's is excluded from the sum rather than
+                silently blended in (see CHECKPOINT_3/4 currency-guard fixes). */}
+            {(() => {
+              const donutCurrency = data.project.currency;
+              const donutInputs: { label: string; metric: typeof position.certifiedActual }[] = [
+                { label: "Certified actual", metric: position.certifiedActual },
+                { label: "Open commitments", metric: position.openCommitments },
+                { label: "Approved not ordered", metric: position.approvedNotOrdered },
+              ];
+              const amounts = donutInputs.map((d) =>
+                d.metric.status === "computed" && d.metric.value.currency === donutCurrency ? d.metric.value.amount : 0
+              );
+              const excluded = donutInputs
+                .filter((d) => !(d.metric.status === "computed" && d.metric.value.currency === donutCurrency))
+                .map((d) => ({
+                  label: d.label,
+                  reason:
+                    d.metric.status === "computed"
+                      ? `${d.metric.value.currency} ${d.metric.value.amount.toLocaleString()}`
+                      : d.metric.reason,
+                }));
+              return (
+                <ExposureDonut
+                  certifiedActual={amounts[0]}
+                  openCommitments={amounts[1]}
+                  approvedNotOrdered={amounts[2]}
+                  currency={donutCurrency}
+                  excluded={excluded}
+                />
+              );
+            })()}
 
             {/* F. Forecast trajectory — deferred */}
             <div className="rounded-[var(--c1x-radius-surface)] border border-c1x-line bg-c1x-surface p-4">

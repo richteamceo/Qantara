@@ -60,6 +60,10 @@ CREATE TABLE "finance_validations" (
 	"route" "finance_route" NOT NULL,
 	"gross_order_value" numeric(18, 2) NOT NULL,
 	"currency" text DEFAULT 'GHS' NOT NULL,
+	"vat_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
+	"nhil_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
+	"getfund_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
+	"wht_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
 	"net_payable" numeric(18, 2) NOT NULL,
 	"status" "finance_validation_status" DEFAULT 'PENDING' NOT NULL,
 	"validated_at" timestamp with time zone,
@@ -124,6 +128,7 @@ CREATE TABLE "purchase_orders" (
 	"reference" text NOT NULL,
 	"net" numeric(18, 2) NOT NULL,
 	"gross" numeric(18, 2) NOT NULL,
+	"currency" text DEFAULT 'GHS' NOT NULL,
 	"status" "purchase_order_status" DEFAULT 'ISSUED' NOT NULL,
 	"issued_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "purchase_orders_reference_unique" UNIQUE("reference")

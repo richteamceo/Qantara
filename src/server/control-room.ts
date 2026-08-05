@@ -53,6 +53,7 @@ export type ControlAccountRow = {
   awardedNotOrdered: number;
   awardedNotOrderedCurrency: string | null;
   openCommitment: number;
+  openCommitmentCurrency: string | null;
   certifiedActual: number;
   variance: MetricValue;
   activeGate: string;
@@ -119,6 +120,7 @@ type RequestChainRow = {
   financeValidationCurrency: string | null;
   purchaseOrderId: string | null;
   purchaseOrderGross: string | null;
+  purchaseOrderCurrency: string | null;
   fulfilmentId: string | null;
   rejectedQty: string | null;
   paymentVoucherId: string | null;
@@ -167,6 +169,7 @@ export async function getControlRoomData(
       financeValidationCurrency: financeValidations.currency,
       purchaseOrderId: purchaseOrders.id,
       purchaseOrderGross: purchaseOrders.gross,
+      purchaseOrderCurrency: purchaseOrders.currency,
       fulfilmentId: fulfilmentEntries.id,
       rejectedQty: fulfilmentEntries.rejectedQty,
       paymentVoucherId: paymentVouchers.id,
@@ -195,6 +198,7 @@ export async function getControlRoomData(
       awardedNotOrdered: number;
       awardedNotOrderedCurrency: string | null;
       openCommitment: number;
+      openCommitmentCurrency: string | null;
       certifiedActual: number;
     }
   >();
@@ -211,12 +215,11 @@ export async function getControlRoomData(
   let totalCashPaid = 0;
   const decisions: DecisionItem[] = [];
 
-  // Downstream package/award/finance-validation/PO/GRN/PV records don't
-  // carry their own currency field yet (open gap, CHECKPOINT_1_ADDENDUM.md
-  // #1) — those amounts are treated as the project's reporting currency, as
-  // before. Only the request itself (and therefore the pipeline bucket) has
-  // a real per-record currency, because MR-DEMO-0001 (Checkpoint 2) is
-  // genuinely USD, sourced from its own BOQ line's real rate.
+  // Fulfilment/PV records don't carry their own currency field yet (open
+  // gap — every other downstream table has needed one eventually, see
+  // CHECKPOINT_3/4 reports; certifiedActual/cashPaid are next once the
+  // demo chain reaches Page 08/09). Everything else now has a real
+  // per-record currency.
   for (const r of rows) {
     const bucket = perAccount.get(r.controlAccountId) ?? {
       requestPipeline: 0,
@@ -224,6 +227,7 @@ export async function getControlRoomData(
       awardedNotOrdered: 0,
       awardedNotOrderedCurrency: null,
       openCommitment: 0,
+      openCommitmentCurrency: null,
       certifiedActual: 0,
     };
 
@@ -238,6 +242,7 @@ export async function getControlRoomData(
 
     if (r.purchaseOrderId) {
       bucket.openCommitment += Number(r.purchaseOrderGross) - certifiedGross;
+      bucket.openCommitmentCurrency = mergeCurrency(bucket.openCommitmentCurrency, r.purchaseOrderCurrency!);
     } else if (r.awardId) {
       bucket.awardedNotOrdered += Number(r.awardNet);
       bucket.awardedNotOrderedCurrency = mergeCurrency(bucket.awardedNotOrderedCurrency, r.awardCurrency!);
@@ -263,7 +268,7 @@ export async function getControlRoomData(
     } else if (r.purchaseOrderId) {
       lifecycleCounts.order.count += 1;
       lifecycleCounts.order.amount += Number(r.purchaseOrderGross);
-      lifecycleCounts.order.currency = mergeCurrency(lifecycleCounts.order.currency, project.currency);
+      lifecycleCounts.order.currency = mergeCurrency(lifecycleCounts.order.currency, r.purchaseOrderCurrency!);
     } else if (r.financeValidationId) {
       lifecycleCounts.financeValidation.count += 1;
       lifecycleCounts.financeValidation.amount += Number(r.financeGrossOrderValue ?? 0);
@@ -314,6 +319,7 @@ export async function getControlRoomData(
       awardedNotOrdered: 0,
       awardedNotOrderedCurrency: null,
       openCommitment: 0,
+      openCommitmentCurrency: null,
       certifiedActual: 0,
     };
     const budget = Number(a.currentBudget);
@@ -322,7 +328,7 @@ export async function getControlRoomData(
     const currencySet = new Set<string>([a.currency]);
     if (b.requestPipeline !== 0 && b.requestPipelineCurrency) currencySet.add(b.requestPipelineCurrency);
     if (b.awardedNotOrdered !== 0 && b.awardedNotOrderedCurrency) currencySet.add(b.awardedNotOrderedCurrency);
-    if (b.openCommitment !== 0) currencySet.add(project.currency);
+    if (b.openCommitment !== 0 && b.openCommitmentCurrency) currencySet.add(b.openCommitmentCurrency);
     if (b.certifiedActual !== 0) currencySet.add(project.currency);
 
     const variance: MetricValue =
@@ -348,6 +354,7 @@ export async function getControlRoomData(
       awardedNotOrdered: b.awardedNotOrdered,
       awardedNotOrderedCurrency: b.awardedNotOrderedCurrency,
       openCommitment: b.openCommitment,
+      openCommitmentCurrency: b.openCommitmentCurrency,
       certifiedActual: b.certifiedActual,
       variance,
       activeGate: b.certifiedActual > 0 ? "Fulfilment / PV & Settle" : b.awardedNotOrdered + b.openCommitment > 0 ? "Order & Commit" : b.requestPipeline > 0 ? "Approval control" : "Demand & BOQ gate",
@@ -361,6 +368,10 @@ export async function getControlRoomData(
     accountRows.filter((a) => a.awardedNotOrdered !== 0 && a.awardedNotOrderedCurrency).map((a) => a.awardedNotOrderedCurrency!)
   );
   const awardedNotOrderedCurrency = awardedCurrencies.size <= 1 ? ([...awardedCurrencies][0] ?? project.currency) : null;
+  const openCommitmentCurrencies = new Set(
+    accountRows.filter((a) => a.openCommitment !== 0 && a.openCommitmentCurrency).map((a) => a.openCommitmentCurrency!)
+  );
+  const openCommitmentCurrency = openCommitmentCurrencies.size <= 1 ? ([...openCommitmentCurrencies][0] ?? project.currency) : null;
 
   const currency = project.currency;
 
@@ -449,11 +460,17 @@ export async function getControlRoomData(
         value: { amount: totalCertified, currency },
         basis: "Sum of gross payment-voucher-certified value (accepted net + tax additions)",
       },
-      openCommitments: {
-        status: "computed",
-        value: { amount: totalOpenCommitment, currency },
-        basis: "Sum of order gross less certified gross, per open purchase order",
-      },
+      openCommitments:
+        openCommitmentCurrency !== null
+          ? {
+              status: "computed",
+              value: { amount: totalOpenCommitment, currency: openCommitmentCurrency },
+              basis: "Sum of order gross less certified gross, per open purchase order",
+            }
+          : {
+              status: "incomplete",
+              reason: "Open-commitment amounts are in different currencies — not summed into one misleading figure",
+            },
       approvedNotOrdered:
         awardedNotOrderedCurrency !== null
           ? {

@@ -1,5 +1,5 @@
 {
-  "id": "7803e94d-3f22-4536-be70-cf3a3585f33a",
+  "id": "12cfb19e-c28c-4b7c-a915-ac8391eee71c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -388,6 +388,34 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'GHS'"
+        },
+        "vat_amount": {
+          "name": "vat_amount",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "nhil_amount": {
+          "name": "nhil_amount",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "getfund_amount": {
+          "name": "getfund_amount",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "wht_amount": {
+          "name": "wht_amount",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
         },
         "net_payable": {
           "name": "net_payable",
@@ -837,6 +865,13 @@
           "type": "numeric(18, 2)",
           "primaryKey": false,
           "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'GHS'"
         },
         "status": {
           "name": "status",

@@ -250,6 +250,18 @@ export const financeValidations = pgTable("finance_validations", {
   grossOrderValue: numeric("gross_order_value", { precision: 18, scale: 2 }).notNull(),
   /** Added Checkpoint 3 — the golden fixture's FV is GHS (assumed, matching the rest of that chain); the demo award is genuinely USD. */
   currency: text("currency").notNull().default("GHS"),
+  /**
+   * Formula-bridge breakdown per PAGE_06_FINANCE_VALIDATION.md — added
+   * Checkpoint 4. VAT 15%, NHIL 2.5%, GETFund 2.5% (net -> gross); WHT is
+   * an indicative 2% of net at the payable event (gross -> net payable).
+   * The golden fixture reveals WHT is 2% here, not the 5% figure in the
+   * workbook's SETTINGS sheet used as an approximation in Checkpoint 3 —
+   * corrected, see CHECKPOINT_4_REPORT.md.
+   */
+  vatAmount: numeric("vat_amount", { precision: 18, scale: 2 }).notNull().default("0"),
+  nhilAmount: numeric("nhil_amount", { precision: 18, scale: 2 }).notNull().default("0"),
+  getfundAmount: numeric("getfund_amount", { precision: 18, scale: 2 }).notNull().default("0"),
+  whtAmount: numeric("wht_amount", { precision: 18, scale: 2 }).notNull().default("0"),
   netPayable: numeric("net_payable", { precision: 18, scale: 2 }).notNull(),
   status: financeValidationStatusEnum("status").notNull().default("PENDING"),
   validatedAt: timestamp("validated_at", { withTimezone: true }),
@@ -263,6 +275,8 @@ export const purchaseOrders = pgTable("purchase_orders", {
   reference: text("reference").notNull().unique(),
   net: numeric("net", { precision: 18, scale: 2 }).notNull(),
   gross: numeric("gross", { precision: 18, scale: 2 }).notNull(),
+  /** Added Checkpoint 4 — learned the hard way in Checkpoints 3-4 (see CHECKPOINT_3/4 reports): every money-bearing downstream table needs its own currency from the start, not assumed to match the project. */
+  currency: text("currency").notNull().default("GHS"),
   status: purchaseOrderStatusEnum("status").notNull().default("ISSUED"),
   issuedAt: timestamp("issued_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -1,0 +1,15 @@
+{
+  "checkpoint": 4,
+  "pages": ["P06 — Finance Validation and Binding Route"],
+  "capturedWith": "Playwright (chromium), 2026-08-04",
+  "screenshots": [
+    { "file": "P06/fv-golden-1440x900.png", "sha256": "b67bf66455e0434b1fecad761d573c82aee5ba94c6a1a92e467e30eb6bae0193", "state": "VALIDATED, CREDIT locked, PO-2026-041 already issued, Decision Pack tab" },
+    { "file": "P06/fv-golden-tax-tab-1440x900.png", "sha256": "48453e0e5078dba89c3c4c24dc7d182ca4a7941218b352a375a9613d9903247f", "state": "Tax & Deductions tab — reconciles exactly to PAGE_06's own fixture text" },
+    { "file": "P06/fv-demo-before-lock-1440x900.png", "sha256": "79855631a72fcfb170b5b9ead2e83d6e88e532fac7aee0df27f2c98079564c95", "state": "PENDING, Route & Sequence tab, all 6 route cards with real eligibility" },
+    { "file": "P06/fv-demo-after-lock-1440x900.png", "sha256": "6030df4a71584d2a10bdc7aaed0b8d02a32773d10ca50f068a3544bc8ba3d1f4", "state": "VALIDATED after live Validate & Lock CREDIT — PO-DEMO-0001 created" },
+    { "file": "P06/award-demo-after-finance-lock-1440x900.png", "sha256": "82d54ed07e5d2a49542e7a5bc287b3eb468664bca7578311b70812bcf62f93f3", "state": "P05 re-checked — Finance link now live" },
+    { "file": "requests-register-after-checkpoint4-1440x900.png", "sha256": "fe6f7ea70fa03b3c078256abafa1f62bd05a2283425d586e62332b8e6f8fb944", "state": "P02 re-checked for regressions" },
+    { "file": "control-room-after-checkpoint4-1440x900.png", "sha256": "17e061760fba75a26c43a93925d750b9de486477468dc2547615510d37fb243e", "state": "Page 01 re-checked — Order & Commit lifecycle position now exercised with two real, correctly currency-tagged purchase orders; donut exclusion-note bug fixed" }
+  ],
+  "notesOnMissingStates": "Only 'populated' plus one live before/after transition. Full contract required-states list (assigned/claimed, ineligible-disabled shown but not all combinations, tax-profile missing, supplier blocked, SoD conflict, route change/reversal, historical read-only, multi-currency shown partially, partial line issue) not covered — disclosed gap."
+}
