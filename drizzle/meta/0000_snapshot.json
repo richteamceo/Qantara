@@ -1,9 +1,67 @@
 {
-  "id": "edf8f524-f187-4d58-b51b-68bf3ff5d584",
+  "id": "b138ce8e-6dc5-444e-b1de-1690770f05fc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.audit_events": {
+      "name": "audit_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "audit_event_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "object_type": {
+          "name": "object_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "object_reference": {
+          "name": "object_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_role": {
+          "name": "actor_role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "detail": {
+          "name": "detail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.award_decisions": {
       "name": "award_decisions",
       "schema": "",
@@ -1395,6 +1453,13 @@
     }
   },
   "enums": {
+    "public.audit_event_type": {
+      "name": "audit_event_type",
+      "schema": "public",
+      "values": [
+        "DOCUMENT_EXPORT"
+      ]
+    },
     "public.award_status": {
       "name": "award_status",
       "schema": "public",

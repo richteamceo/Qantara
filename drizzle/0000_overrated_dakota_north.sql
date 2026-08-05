@@ -1,3 +1,4 @@
+CREATE TYPE "public"."audit_event_type" AS ENUM('DOCUMENT_EXPORT');--> statement-breakpoint
 CREATE TYPE "public"."award_status" AS ENUM('DRAFT', 'SENT_TO_FINANCE');--> statement-breakpoint
 CREATE TYPE "public"."finance_route" AS ENUM('CREDIT', 'CASH', 'ADVANCE', 'URGENT', 'DIRECT', 'REVIEW');--> statement-breakpoint
 CREATE TYPE "public"."finance_validation_status" AS ENUM('PENDING', 'VALIDATED');--> statement-breakpoint
@@ -7,6 +8,16 @@ CREATE TYPE "public"."payment_voucher_status" AS ENUM('DRAFT', 'APPROVED', 'PAID
 CREATE TYPE "public"."purchase_order_status" AS ENUM('ISSUED', 'AMENDED', 'CLOSED');--> statement-breakpoint
 CREATE TYPE "public"."request_line_authority_type" AS ENUM('BOQ', 'EXCEPTION');--> statement-breakpoint
 CREATE TYPE "public"."request_status" AS ENUM('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED');--> statement-breakpoint
+CREATE TABLE "audit_events" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"event_type" "audit_event_type" NOT NULL,
+	"object_type" text NOT NULL,
+	"object_reference" text NOT NULL,
+	"actor_role" text NOT NULL,
+	"detail" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "award_decisions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"package_id" uuid NOT NULL,

@@ -1,10 +1,12 @@
 # CORE1X — Owner Acceptance Pack
 
-Consolidated summary across Checkpoints 0–7, per
-`05_CLAUDE_CODE_EXECUTION/CONTROLLED_BUILD_AND_CHECKPOINT_PROGRAMME.md`.
-This document indexes the individual checkpoint reports; it does not
-replace them. Every figure below is sourced from the checkpoint reports
-and their evidence directories, not restated from memory.
+Consolidated summary across Checkpoints 0–8. Checkpoints 0–7 follow
+`05_CLAUDE_CODE_EXECUTION/CONTROLLED_BUILD_AND_CHECKPOINT_PROGRAMME.md`,
+which ends at Checkpoint 7; Checkpoint 8 is self-scoped (see
+`CHECKPOINT_8_REPORT.md` §1) since the pack does not define what comes
+after. This document indexes the individual checkpoint reports; it does
+not replace them. Every figure below is sourced from the checkpoint
+reports and their evidence directories, not restated from memory.
 
 ## 1. What was built
 
@@ -25,6 +27,7 @@ check as of Checkpoint 7.
 | 5 | Page 07 Purchase Order, Page 08 Fulfilment/GRN | `CHECKPOINT_5_REPORT.md` |
 | 6 | Page 09 Payment Voucher, end-to-end golden closure | `CHECKPOINT_6_REPORT.md` |
 | 7 | Phase-1 hardening: RBAC/SoD, accessibility, regression | `CHECKPOINT_7_REPORT.md` |
+| 8 | Self-scoped: real PDF generation for PO/PV, export audit logging | `CHECKPOINT_8_REPORT.md` |
 
 Every checkpoint's status is **NOT OWNER-ACCEPTED**. This pack does not
 change that — it is a navigation aid for review, not a self-certification.
@@ -66,7 +69,7 @@ already disclosed individually in their originating checkpoint report:
 | Gap | Since | Status |
 |---|---|---|
 | No real authentication/login | CP1 | CP7 added a real server-enforced RBAC/SoD *gate*, but "who you are" is a self-service cookie switcher, not a credential-checked identity — see CHECKPOINT_7_REPORT.md §7 |
-| No evidence/audit engine | CP1 | Every readiness sidecar discloses this rather than faking it |
+| No evidence/audit engine | CP1 | CP8 added a real, minimal `audit_events` table logging document exports only (triggered by the PDF feature actually needing it) — not the full immutable audit/evidence engine every readiness sidecar still discloses as missing |
 | No forecast/cashflow model | CP1 | Page 01's Forecast final cost KPI stays `Incomplete`, not zero |
 | No cross-currency conversion | CP1 | Currency-guard pattern refuses to blend currencies rather than guess an exchange rate — recurred and was fixed 4 times (CP3, CP4 x2, CP6) as new money tables were added; CP7 confirms no more untagged money tables remain |
 | Three-way match is two-way | CP6 | No supplier invoice/certificate entity exists; PO-vs-GRN match is real, invoice leg is not |
@@ -74,6 +77,9 @@ already disclosed individually in their originating checkpoint report:
 | Only CREDIT route produces its own next object (PO) | CP4 | CASH/ADVANCE/DIRECT/URGENT lock the route decision but the schema has no PV-without-PO path yet |
 | Single-shot immutable receipts/vouchers | CP5, CP6 | No partial/multiple GRNs per line, no reversal/part-payment flow |
 | Register pagination/export/bulk ops | CP2 | Deferred, dataset is 2 rows so not yet load-bearing |
+| No PDF pagination (multi-page documents) | CP8 | A PO/PV with enough lines to exceed one page would draw off the bottom of the page; not reachable with current seed data (max 3 lines) |
+| Only 2 of ~14 required document types have real PDF generation | CP8 | PO and PV only; RFQs, GRNs, board packs, quotation comparisons, etc. not attempted |
+| Pre-existing dev-only `esbuild`/`drizzle-kit` moderate advisory | CP8 (found) | Dev-server-only, not shipped in the app; fix requires a breaking `drizzle-kit` downgrade — not applied, see CHECKPOINT_8_REPORT.md §15 |
 
 ## 5. Verification performed
 
@@ -93,6 +99,8 @@ Fresh clone → `npm install` → `npx drizzle-kit migrate` → `npx tsx src/db/
 3. The approved design tokens' WCAG AA contrast conflict (CP7) — adjust the tokens (a design-authority change requiring sign-off) or accept AA as a non-binding target for this internal tool?
 4. Should the demo chain's now-fully-proven transitions be baked into `seed.ts` permanently, so future checkpoints don't need to re-drive 5+ live transitions to reach their own starting state (CP6, CP7)?
 5. Real authentication (replacing the Checkpoint 7 simulated role switcher) — priority for the next checkpoint, or continue with further page/contract depth first?
+6. Confirm "professional outputs" (CP8) was an acceptable checkpoint to self-scope, or specify a different area from the remaining Phase-1 hardening basket (security/SAST, performance/load testing, migration, integration, backup/restore, observability) going forward.
+7. The pre-existing `drizzle-kit`/`esbuild` dev-dependency advisory (CP8) — accept as dev-only risk or invest in the breaking downgrade.
 
 ## 8. Status
 
@@ -105,6 +113,6 @@ unaccepted page slice in implementation").
 
 Owner acceptance (to be completed by the owner, not by Claude Code):
 
-- [ ] Reviewed and accepted: Checkpoints 0–7
+- [ ] Reviewed and accepted: Checkpoints 0–8
 - Signed:
 - Date:

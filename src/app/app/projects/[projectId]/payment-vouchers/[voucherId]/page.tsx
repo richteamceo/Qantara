@@ -64,6 +64,16 @@ export default async function PaymentVoucherPage({
               >
                 Return to Fulfilment
               </span>
+              {data.voucher.status === "PAID" && (
+                <a
+                  href={`/app/projects/${data.project.reference}/payment-vouchers/${data.voucher.reference}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="c1x-focusable rounded-[var(--c1x-radius-control)] border border-c1x-line bg-c1x-surface-soft px-3 py-1.5 text-xs text-c1x-ink hover:bg-c1x-line/40"
+                >
+                  Export PV PDF
+                </a>
+              )}
               {data.canApprove ? (
                 <ApproveAndPayButton projectReference={data.project.reference} voucherReference={data.voucher.reference} />
               ) : (

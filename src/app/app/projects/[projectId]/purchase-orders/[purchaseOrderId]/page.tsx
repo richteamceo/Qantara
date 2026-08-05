@@ -61,13 +61,24 @@ export default async function PurchaseOrderPage({
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="flex gap-2">
-              <span
-                aria-disabled="true"
-                title="Preview Order PDF — not wired yet (Checkpoint 6+)"
-                className="c1x-focusable cursor-not-allowed rounded-[var(--c1x-radius-control)] border border-c1x-line bg-c1x-surface-soft px-3 py-1.5 text-xs text-c1x-muted"
-              >
-                Preview Order PDF
-              </span>
+              {data.po.status === "ISSUED" ? (
+                <a
+                  href={`/app/projects/${data.project.reference}/purchase-orders/${data.po.reference}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="c1x-focusable rounded-[var(--c1x-radius-control)] border border-c1x-line bg-c1x-surface-soft px-3 py-1.5 text-xs text-c1x-ink hover:bg-c1x-line/40"
+                >
+                  Preview Order PDF
+                </a>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  title={`PDF requires an ISSUED PO — current status ${data.po.status}`}
+                  className="c1x-focusable cursor-not-allowed rounded-[var(--c1x-radius-control)] border border-c1x-line bg-c1x-surface-soft px-3 py-1.5 text-xs text-c1x-muted"
+                >
+                  Preview Order PDF
+                </span>
+              )}
               <span
                 aria-disabled="true"
                 title="Amend/Cancel — not wired yet (Checkpoint 6+)"

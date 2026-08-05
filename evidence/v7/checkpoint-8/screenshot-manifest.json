@@ -1,0 +1,21 @@
+{
+  "checkpoint": 8,
+  "pages": ["Professional document outputs (self-scoped from Phase-1 hardening basket — see CHECKPOINT_8_REPORT.md §1)"],
+  "capturedWith": "Playwright (chromium) + curl, 2026-08-05",
+  "screenshots": [
+    { "file": "po-page-with-pdf-button-1440x900.png", "sha256": "d96588766e7df73628fc3ea4f9bff4cad2b8b599b551d61b72fb7820bd2506b2", "state": "P07 golden PO-2026-041 — 'Preview Order PDF' is now a real enabled link, not a disabled placeholder" },
+    { "file": "po-pdf-rendered-content.png", "sha256": "17dcd24e1983fe7a8ae6554a42880211f38c738bf05093093c0150def3951b55", "state": "Rendered content of PO-2026-041.pdf (Chromium PDF viewer) — figures match the golden fixture exactly (net 1,365,960 / statutory additions 273,192 / gross 1,639,152)" },
+    { "file": "pv-page-with-pdf-button-1440x900.png", "sha256": "4e92bccff2163530a146a981df1d29084efe41e916a309ee90e5bd488d860abb", "state": "P09 golden PV-2026-0076 — new 'Export PV PDF' action added to the header (not a page-contract-named button, added because the Document Generation Standard lists payment vouchers as a required document type)" },
+    { "file": "pv-pdf-rendered-content.png", "sha256": "213f8860c5130882754a1f4cc2b49e3af3d3e854e2ddddc1369d5abda78ec8ef", "state": "Rendered content of PV-2026-0076.pdf — figures match the golden fixture exactly (174,952 / 34,990 / 3,499 / 206,443)" },
+    { "file": "control-room-regression-1440x900.png", "sha256": "19ae0fd261fe2099ffa453f37e72a0ad5d2a02fac9a3664976c045a1ef1e4b0d", "state": "Page 01 re-checked — identical hash to Checkpoint 7's regression screenshot, confirming zero regression (this checkpoint touched no money/lifecycle logic)" }
+  ],
+  "downloadedArtifacts": [
+    { "file": "PO-2026-041.pdf", "sha256": "77382a64c21f84a3ad970e55be067e8cbc122be83f491c472d9733c4c1d2d435", "note": "Actual generated PDF bytes, downloaded via the app's own /pdf route, not a mockup" },
+    { "file": "PV-2026-0076.pdf", "sha256": "c13cec411d6f10c001de035d4c6cba40a519f58f836b98ac4f728518daffac94", "note": "Actual generated PDF bytes, downloaded via the app's own /pdf route" }
+  ],
+  "auditTrail": {
+    "file": "audit-events-snapshot.txt",
+    "note": "Real audit_events rows written by the new export-logging path during this checkpoint's testing — 11 rows across repeated downloads while iterating on the table-overflow bug fix, confirming the logging fires reliably on every request, not just once"
+  },
+  "notesOnMissingStates": "Only the two document types explicitly gated (PO, PV) were built; the standard's much larger required-document-type list (RFQs, quotation comparisons, GRNs, board packs, etc.) is not attempted — disclosed as out of scope for this checkpoint. The 'not_ready' (409) response path for a non-ISSUED/non-PAID source record was verified by code review, not a live reproduction, since this build's schema has no code path that leaves a PO in a non-ISSUED status."
+}

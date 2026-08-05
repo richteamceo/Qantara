@@ -337,3 +337,24 @@ export const paymentVouchers = pgTable("payment_vouchers", {
   status: paymentVoucherStatusEnum("status").notNull().default("DRAFT"),
   paidAt: timestamp("paid_at", { withTimezone: true }),
 });
+
+/**
+ * Added Checkpoint 8 — DOCUMENT_AND_REPORT_GENERATION_STANDARD.md's
+ * distribution rule ("every distribution writes an AuditEvent") is the
+ * direct trigger for finally adding an audit table (a gap disclosed since
+ * Checkpoint 1). Deliberately minimal: this is not the full immutable
+ * audit/evidence engine every prior checkpoint's readiness sidecar
+ * discloses as missing — just enough to log document exports for real,
+ * not fabricate the log while claiming it exists.
+ */
+export const auditEventTypeEnum = pgEnum("audit_event_type", ["DOCUMENT_EXPORT"]);
+
+export const auditEvents = pgTable("audit_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  eventType: auditEventTypeEnum("event_type").notNull(),
+  objectType: text("object_type").notNull(),
+  objectReference: text("object_reference").notNull(),
+  actorRole: text("actor_role").notNull(),
+  detail: text("detail").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
