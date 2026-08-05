@@ -1,0 +1,37 @@
+[
+  {
+    "label": "01 loaded MR-DEMO-0002 Workflow tab, chain PENDING",
+    "ts": "2026-08-05T16:13:43.614Z"
+  },
+  {
+    "label": "02 Approve&Prepare disabled before chain complete",
+    "extra": true,
+    "ts": "2026-08-05T16:13:43.624Z"
+  },
+  {
+    "label": "03 step1 Procurement APPROVED",
+    "ts": "2026-08-05T16:13:45.201Z"
+  },
+  {
+    "label": "04 step2 Finance APPROVED",
+    "ts": "2026-08-05T16:13:47.050Z"
+  },
+  {
+    "label": "05 still disabled with step3 pending",
+    "extra": true,
+    "ts": "2026-08-05T16:13:47.968Z"
+  },
+  {
+    "label": "06 step3 MD APPROVED, chain complete",
+    "ts": "2026-08-05T16:13:49.785Z"
+  },
+  {
+    "label": "07 Approve&Prepare now enabled",
+    "extra": true,
+    "ts": "2026-08-05T16:13:50.701Z"
+  },
+  {
+    "label": "08 package created after chain approved",
+    "ts": "2026-08-05T16:13:51.599Z"
+  }
+]

@@ -77,6 +77,39 @@ export const requestLineAuthorityEnum = pgEnum("request_line_authority_type", [
   "EXCEPTION",
 ]);
 
+/**
+ * Added Checkpoint 12 — the real multi-tier approval chains found in the
+ * source workbook (REQUESTER/PROCUREMENT sheets' ①②③ Procurement/Finance/
+ * MD columns; FINANCE VALIDATION sheet's Accountant/MD columns) and
+ * mandated by the pack's own WORKFLOW_AND_APPROVAL_ENGINE_STANDARD.md and
+ * BR-APR-001 ("Run ordered workflow", MUST severity) — absent from
+ * Checkpoints 1-11's single-click collapsed transitions. See
+ * CHECKPOINT_12_REPORT.md.
+ *
+ * Decision values mirror the workbook's own APPROVAL_CTRL enum (PENDING,
+ * APPROVED, REJECTED, RETURNED) — UNDER REVIEW/claim semantics are a
+ * disclosed scope-out, see the report. MD steps never receive RETURNED
+ * (MD APPROVAL CORRECTION QA sheet: "MD dropdown = APPROVED/UNDER REVIEW/
+ * REJECTED only") — enforced in src/server/approvals.ts, not the schema.
+ */
+export const approvalDecisionEnum = pgEnum("approval_decision", [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+  "RETURNED",
+]);
+
+/**
+ * REQUEST_AUTHORIZATION = the 3-tier Procurement -> Finance/Admin -> MD
+ * chain (workbook REQUESTER/PROCUREMENT sheets), gating package creation.
+ * FINANCE_PAYMENT_AUTHORIZATION = the 2-tier Accountant -> MD chain
+ * (workbook FINANCE VALIDATION sheet), gating Payment Voucher creation.
+ */
+export const approvalChainTypeEnum = pgEnum("approval_chain_type", [
+  "REQUEST_AUTHORIZATION",
+  "FINANCE_PAYMENT_AUTHORIZATION",
+]);
+
 export const organisations = pgTable("organisations", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
@@ -209,6 +242,32 @@ export const quotations = pgTable("quotations", {
   validUntil: timestamp("valid_until", { withTimezone: true }),
   isSoleSource: boolean("is_sole_source").notNull().default(false),
   technicallyCompliant: boolean("technically_compliant").notNull().default(true),
+});
+
+/**
+ * Added Checkpoint 12 — one row per required step of a chain instance.
+ * Polymorphic subject (subjectId references requests.id for
+ * REQUEST_AUTHORIZATION or finance_validations.id for
+ * FINANCE_PAYMENT_AUTHORIZATION) rather than two near-identical tables,
+ * since both chains share the exact same sequential-gate/decide/audit
+ * mechanics — no FK constraint on subjectId as a result (disclosed, same
+ * trade-off pattern as scripts/reconcile.ts's allowlisted table-name
+ * interpolation in Checkpoint 9). subjectReference is denormalized so the
+ * step can be displayed/looked up without an extra join back to the
+ * polymorphic parent.
+ */
+export const approvalSteps = pgTable("approval_steps", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  chainType: approvalChainTypeEnum("chain_type").notNull(),
+  subjectId: uuid("subject_id").notNull(),
+  subjectReference: text("subject_reference").notNull(),
+  stepNo: integer("step_no").notNull(),
+  stepRole: text("step_role").notNull(),
+  stepLabel: text("step_label").notNull(),
+  decision: approvalDecisionEnum("decision").notNull().default("PENDING"),
+  decidedByRole: text("decided_by_role"),
+  decidedAt: timestamp("decided_at", { withTimezone: true }),
+  comment: text("comment"),
 });
 
 export const awardDecisions = pgTable("award_decisions", {
@@ -347,7 +406,11 @@ export const paymentVouchers = pgTable("payment_vouchers", {
  * discloses as missing — just enough to log document exports for real,
  * not fabricate the log while claiming it exists.
  */
-export const auditEventTypeEnum = pgEnum("audit_event_type", ["DOCUMENT_EXPORT"]);
+export const auditEventTypeEnum = pgEnum("audit_event_type", [
+  "DOCUMENT_EXPORT",
+  /** Added Checkpoint 12 — every approval-step decision, per the workbook's Audit event contract (actor, role, source record, decision, reason, timestamp). */
+  "APPROVAL_DECISION",
+]);
 
 export const auditEvents = pgTable("audit_events", {
   id: uuid("id").primaryKey().defaultRandom(),

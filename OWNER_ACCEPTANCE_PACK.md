@@ -1,6 +1,6 @@
 # CORE1X — Owner Acceptance Pack
 
-Consolidated summary across Checkpoints 0–11. Checkpoints 0–7 follow
+Consolidated summary across Checkpoints 0–12. Checkpoints 0–7 follow
 `05_CLAUDE_CODE_EXECUTION/CONTROLLED_BUILD_AND_CHECKPOINT_PROGRAMME.md`,
 which ends at Checkpoint 7; Checkpoint 8 is self-scoped (see
 `CHECKPOINT_8_REPORT.md` §1) since the pack does not define what comes
@@ -15,7 +15,11 @@ real, working implementation: server-side data aggregation from a
 Postgres/Drizzle schema, a UI matching each contract's KPI strip and a
 real subset of its required tabs, and one primary state-changing
 transition per page, gated by a real (if simulated-identity) permission
-check as of Checkpoint 7.
+check as of Checkpoint 7. As of Checkpoint 12, two of those transitions
+(Page 03's package creation, Page 08's payment-voucher creation) are
+additionally gated by a real, multi-actor, sequential approval chain —
+see the Checkpoint 12 row below; this was found to be a genuine gap
+across Checkpoints 1-11, not a disclosed-and-accepted simplification.
 
 | Checkpoint | Scope | Report |
 |---|---|---|
@@ -31,6 +35,7 @@ check as of Checkpoint 7.
 | 9 | Self-scoped: backup/restore drill with corruption-detection proof | `CHECKPOINT_9_REPORT.md` |
 | 10 | Self-scoped: measured performance/N+1 query audit across all 9 pages | `CHECKPOINT_10_REPORT.md` |
 | 11 | Self-scoped: security audit (secrets, injection, XSS, dependencies) | `CHECKPOINT_11_REPORT.md` |
+| 12 | **Correction, not self-scoped**: real multi-tier approval chains (Procurement → Finance/Admin → MD at Request stage; Accountant → MD at Finance Validation stage), sourced from the source workbook and the pack's own `WORKFLOW_AND_APPROVAL_ENGINE_STANDARD.md`/`BR-APR-001` — absent from Checkpoints 1-11 | `CHECKPOINT_12_REPORT.md` |
 
 Every checkpoint's status is **NOT OWNER-ACCEPTED**. This pack does not
 change that — it is a navigation aid for review, not a self-certification.
@@ -86,6 +91,7 @@ already disclosed individually in their originating checkpoint report:
 | Backup/restore only drilled against a local single-node Postgres | CP9 | Mechanism (backup, restore, reconciliation, corruption-detection) proven for real; the pack's 4-hour RTO / 15-minute RPO targets at production Multi-AZ scale are not — no continuous point-in-time-recovery/WAL archiving exists in this sandbox |
 | P06 Finance Validation re-fetches the entire project's control-room dataset for one KPI | CP10 (found) | Deliberate reuse-over-duplication trade-off, disclosed in code since it was written; doesn't scale with any single page's data, only with total project-wide request count — currently negligible (2 requests) |
 | No real auth/MFA/SSO, session/token management, rate limiting, secrets vault, upload scanning, or external pen test | CP1 (auth), CP11 (rest, found/confirmed still missing) | All require real managed infrastructure this sandbox doesn't have; CP11 verified the concretely-checkable subset (secrets, injection, XSS, dependency CVEs) is clean instead |
+| Approval engine covers only two of the workbook's evidenced approval points (Request-stage 3-tier, Finance-Validation-stage 2-tier); no claim/unclaim, delegation, escalation/SLA, effective-dated authority matrices, or organisation-configurable step sets | CP12 (found, partially fixed) | The two chains explicitly named by the owner's correction are real and server-enforced; the pack's fuller `WORKFLOW_AND_APPROVAL_ENGINE_STANDARD.md` scope (and whether other stages — Award Decision, Fulfilment, document release — also need workbook-sourced chains) is an open owner decision, see §7 items 10-11 |
 
 ## 5. Verification performed
 
@@ -96,10 +102,11 @@ already disclosed individually in their originating checkpoint report:
 - Checkpoint 9 additionally: a live backup/restore/reconciliation drill including a simulated data-corruption incident, proving the reconciliation check correctly fails on real corruption (not just passes on clean data) before demonstrating full recovery (`evidence/v7/checkpoint-9/disaster-recovery-drill-transcript.md`).
 - Checkpoint 10 additionally: a real per-request SQL query counter (not a code-review assertion) measuring every page's query count against the golden fixture, confirming no N+1 pattern exists anywhere in the build (`evidence/v7/checkpoint-10/performance-audit-output.txt`).
 - Checkpoint 11 additionally: a real secret-scan (gitleaks, full git history), SQL-injection/XSS code audit, and dependency vulnerability scan (`evidence/v7/checkpoint-11/security-audit-output.txt`) — all clean; the actor-role cookie was hardened to `httpOnly`.
+- Checkpoint 12 additionally: both new approval chains driven live end-to-end from a blocked starting state to an approved, downstream-unblocked state (including proving the server-side gate on `openPaymentVoucher` actually rejects the transition while incomplete, not just disabling a button), plus a golden-fixture regression screenshot confirming no money figures moved (`evidence/v7/checkpoint-12/`).
 
 ## 6. Reproduction
 
-Fresh clone → `npm install` → `npx drizzle-kit migrate` → `npx tsx src/db/seed.ts` → `npm run dev`. The golden transaction is fully populated and read-only browsable immediately. The demo transaction starts at `FV-DEMO-0001` (`PENDING`) and requires driving its live transitions in sequence (see each checkpoint report's "Reproduction" section) — as of Checkpoint 7, each transition requires switching the top-bar "Acting as" role to the one the SoD matrix assigns it (Finance for route-lock/payment-release, Procurement for PO/fulfilment-issuance, Receiver for posting receipts, QS/Commercial for package-prep and voucher-certification, Project Director for award-approval).
+Fresh clone → `npm install` → `npx drizzle-kit migrate` → `npx tsx src/db/seed.ts` → `npm run dev`. The golden transaction is fully populated and read-only browsable immediately, including both Checkpoint 12 approval chains already backfilled as `APPROVED`. The demo transaction starts at `FV-DEMO-0001` (`PENDING`) and requires driving its live transitions in sequence (see each checkpoint report's "Reproduction" section) — as of Checkpoint 7, each transition requires switching the top-bar "Acting as" role to the one the SoD matrix assigns it (Finance for route-lock/payment-release, Procurement for PO/fulfilment-issuance, Receiver for posting receipts, QS/Commercial for package-prep and voucher-certification, Project Director for award-approval). As of Checkpoint 12: `MR-DEMO-0002` starts `SUBMITTED` with an uninitialized Request Authorization chain (Procurement → Finance/Admin → MD) to drive from its dossier's Workflow tab; `FV-DEMO-0001`'s Finance Payment Authorization chain (Accountant → MD) becomes actionable only after its route is locked, on its own Workflow & Audit tab.
 
 ## 7. Owner decision log (open items requiring a decision before further work)
 
@@ -112,6 +119,8 @@ Fresh clone → `npm install` → `npx drizzle-kit migrate` → `npx tsx src/db/
 7. The pre-existing `drizzle-kit`/`esbuild` dev-dependency advisory (CP8) — accept as dev-only risk or invest in the breaking downgrade.
 8. Is a local pg_dump/restore drill (CP9) sufficient evidence for this build's current stage, or should backup/restore be re-tested against a real managed-database environment before that gap is considered closed?
 9. Is the P06 control-room-reuse inefficiency (CP10) worth fixing now, or acceptable until request volume grows enough to matter?
+10. Checkpoint 12 built the two approval chains explicitly evidenced in `REQUESTER`/`PROCUREMENT` and `FINANCE VALIDATION`. Is that the complete set the owner meant by "ACROSS THE WHOLE SYSTEM," or do other stages (Award Decision's `approveSendToFinance`, Fulfilment's receipt posting, PDF/document release) also need their own workbook-sourced multi-actor chains? The workbook was not re-searched for approval columns on those specific sheets in Checkpoint 12.
+11. Now that a workbook-sourced `MANAGING_DIRECTOR` role exists (CP12), should it absorb/replace `PROJECT_DIRECTOR`'s existing `approveSendToFinance` transition (CP3, sourced from the pack's SoD matrix, not the workbook), or are the two deliberately distinct functions?
 
 ## 8. Status
 
@@ -124,6 +133,6 @@ unaccepted page slice in implementation").
 
 Owner acceptance (to be completed by the owner, not by Claude Code):
 
-- [ ] Reviewed and accepted: Checkpoints 0–11
+- [ ] Reviewed and accepted: Checkpoints 0–12
 - Signed:
 - Date:

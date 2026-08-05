@@ -1,4 +1,6 @@
-CREATE TYPE "public"."audit_event_type" AS ENUM('DOCUMENT_EXPORT');--> statement-breakpoint
+CREATE TYPE "public"."approval_chain_type" AS ENUM('REQUEST_AUTHORIZATION', 'FINANCE_PAYMENT_AUTHORIZATION');--> statement-breakpoint
+CREATE TYPE "public"."approval_decision" AS ENUM('PENDING', 'APPROVED', 'REJECTED', 'RETURNED');--> statement-breakpoint
+CREATE TYPE "public"."audit_event_type" AS ENUM('DOCUMENT_EXPORT', 'APPROVAL_DECISION');--> statement-breakpoint
 CREATE TYPE "public"."award_status" AS ENUM('DRAFT', 'SENT_TO_FINANCE');--> statement-breakpoint
 CREATE TYPE "public"."finance_route" AS ENUM('CREDIT', 'CASH', 'ADVANCE', 'URGENT', 'DIRECT', 'REVIEW');--> statement-breakpoint
 CREATE TYPE "public"."finance_validation_status" AS ENUM('PENDING', 'VALIDATED');--> statement-breakpoint
@@ -8,6 +10,20 @@ CREATE TYPE "public"."payment_voucher_status" AS ENUM('DRAFT', 'APPROVED', 'PAID
 CREATE TYPE "public"."purchase_order_status" AS ENUM('ISSUED', 'AMENDED', 'CLOSED');--> statement-breakpoint
 CREATE TYPE "public"."request_line_authority_type" AS ENUM('BOQ', 'EXCEPTION');--> statement-breakpoint
 CREATE TYPE "public"."request_status" AS ENUM('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED');--> statement-breakpoint
+CREATE TABLE "approval_steps" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"chain_type" "approval_chain_type" NOT NULL,
+	"subject_id" uuid NOT NULL,
+	"subject_reference" text NOT NULL,
+	"step_no" integer NOT NULL,
+	"step_role" text NOT NULL,
+	"step_label" text NOT NULL,
+	"decision" "approval_decision" DEFAULT 'PENDING' NOT NULL,
+	"decided_by_role" text,
+	"decided_at" timestamp with time zone,
+	"comment" text
+);
+--> statement-breakpoint
 CREATE TABLE "audit_events" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"event_type" "audit_event_type" NOT NULL,

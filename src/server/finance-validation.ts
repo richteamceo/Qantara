@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import { getControlRoomData, type MetricValue } from "./control-room";
 import { getActorRole, ROLE_LABELS } from "@/lib/auth";
+import { getChainStatus, type ChainStatus } from "./approvals";
 
 export type RouteOption = {
   route: "CREDIT" | "CASH" | "ADVANCE" | "URGENT" | "DIRECT" | "REVIEW";
@@ -53,6 +54,8 @@ export type FinanceValidationData = {
   readinessScore: number;
   canValidateLock: boolean;
   validateBlockedReason: string | null;
+  /** Added Checkpoint 12 — Accountant -> MD chain, source workbook FINANCE VALIDATION sheet. Gates Payment Voucher creation on P08. */
+  paymentAuthorizationChain: ChainStatus;
 };
 
 const CREDIT_SEQUENCE = "Issue PO → Accept GRN/SE → Generate PV → Pay";
@@ -146,6 +149,21 @@ export async function getFinanceValidationData(
   ];
   const readinessScore = Math.round((readiness.filter((c) => c.status === "pass").length / readiness.length) * 100);
 
+  let paymentAuthorizationChain = await getChainStatus("FINANCE_PAYMENT_AUTHORIZATION", fv.id, fv.reference);
+  if (fv.status !== "VALIDATED") {
+    // The Accountant approves the FINAL validated payable amount (BR-FIN-002/003) — not
+    // startable before Finance locks the route, even though ensureChainInitialized
+    // already created PENDING rows for display.
+    paymentAuthorizationChain = {
+      ...paymentAuthorizationChain,
+      steps: paymentAuthorizationChain.steps.map((s) => ({
+        ...s,
+        actionable: false,
+        blockedReason: "Route must be validated and locked (Validate & Lock Route) before payment authorization can start",
+      })),
+    };
+  }
+
   return {
     project: { reference: project.reference, name: project.name },
     fv: {
@@ -179,5 +197,6 @@ export async function getFinanceValidationData(
     readinessScore,
     canValidateLock: fv.status === "PENDING",
     validateBlockedReason: fv.status !== "PENDING" ? `Already ${fv.status}` : null,
+    paymentAuthorizationChain,
   };
 }

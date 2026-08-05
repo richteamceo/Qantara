@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { projects, requests, requestLines, controlAccounts, procurementPackages } from "@/db/schema";
 import { getControlRoomData, type MetricValue } from "./control-room";
+import { getChainStatus, type ChainStatus } from "./approvals";
 
 export type DossierLine = {
   lineNo: number;
@@ -53,6 +54,8 @@ export type RequestDossierData = {
   readinessScore: number;
   canApprovePrepare: boolean;
   approveBlockedReason: string | null;
+  /** Added Checkpoint 12 — Procurement -> Finance/Admin -> MD chain, source workbook REQUESTER/PROCUREMENT sheets. Gates canApprovePrepare. */
+  approvalChain: ChainStatus;
 };
 
 export async function getRequestDossierData(
@@ -110,6 +113,7 @@ export async function getRequestDossierData(
     : null;
 
   const missingAuthorityLines = lines.filter((l) => !l.authorityOk);
+  const approvalChain = await getChainStatus("REQUEST_AUTHORIZATION", request.id, request.reference);
 
   const readiness: ReadinessCheck[] = [
     {
@@ -145,19 +149,22 @@ export async function getRequestDossierData(
     {
       key: "approval-authority",
       label: "Approval authority",
-      status: request.status === "APPROVED" ? "pass" : "fail",
-      detail: request.status === "APPROVED" ? "Request is approved" : `Request status is ${request.status}, not yet APPROVED`,
+      status: approvalChain.overallStatus === "APPROVED" ? "pass" : "fail",
+      detail:
+        approvalChain.overallStatus === "APPROVED"
+          ? "Request Authorization chain (Procurement → Finance/Admin → MD) fully approved"
+          : `Request Authorization chain is ${approvalChain.overallStatus} (${approvalChain.steps.filter((s) => s.decision === "APPROVED").length}/${approvalChain.steps.length} steps approved) — see Workflow tab`,
     },
   ];
   const readinessScore = Math.round((readiness.filter((c) => c.status === "pass").length / readiness.length) * 100);
 
-  const canApprovePrepare = !pkg && missingAuthorityLines.length === 0 && request.status === "SUBMITTED";
+  const canApprovePrepare = !pkg && missingAuthorityLines.length === 0 && approvalChain.overallStatus === "APPROVED";
   const approveBlockedReason = pkg
     ? "Already allocated to a procurement package"
     : missingAuthorityLines.length > 0
       ? `Blocked: ${missingAuthorityLines.length} line(s) lack valid BOQ/exception authority`
-      : request.status !== "SUBMITTED"
-        ? `Request status is ${request.status}, not SUBMITTED`
+      : approvalChain.overallStatus !== "APPROVED"
+        ? `Request Authorization chain (Procurement → Finance/Admin → MD) is ${approvalChain.overallStatus} — not yet fully approved`
         : null;
 
   return {
@@ -194,5 +201,6 @@ export async function getRequestDossierData(
     readinessScore,
     canApprovePrepare,
     approveBlockedReason,
+    approvalChain,
   };
 }

@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { requests, requestLines, procurementPackages } from "@/db/schema";
 import { getActorRole, requireRole, type Role } from "@/lib/auth";
+import { isChainApproved } from "@/server/approvals";
 
 export type ApprovePrepareResult =
   | { status: "created"; packageReference: string }
@@ -25,6 +26,13 @@ export type ApprovePrepareResult =
  * (budget/evidence checks beyond authority), step 4/7 (audit event —
  * no audit log table yet), step 8 (Full Lineage). Those are disclosed
  * gaps, not silently skipped — see CHECKPOINT_2_REPORT.md.
+ *
+ * Checkpoint 12 addition: also requires the Request Authorization chain
+ * (Procurement -> Finance/Admin -> MD, see src/server/approvals.ts) to be
+ * fully APPROVED before a package can be created — sourced directly from
+ * the workbook's REQUESTER/PROCUREMENT sheets and BR-APR-001/002 (MUST
+ * severity), which Checkpoints 1-11 never enforced. Server-side, not just
+ * a disabled button — see CHECKPOINT_12_REPORT.md.
  */
 export async function approvePrepareRequestPackage(
   projectReference: string,
@@ -44,6 +52,15 @@ export async function approvePrepareRequestPackage(
   });
   if (existingPackage) {
     return { status: "already_allocated", packageReference: existingPackage.reference };
+  }
+
+  const chainApproved = await isChainApproved("REQUEST_AUTHORIZATION", request.id, request.reference);
+  if (!chainApproved) {
+    return {
+      status: "blocked",
+      reason: "Request Authorization chain (Procurement → Finance/Admin → MD) is not fully approved yet",
+      blockedLines: [],
+    };
   }
 
   const lines = await db.select().from(requestLines).where(eq(requestLines.requestId, request.id));

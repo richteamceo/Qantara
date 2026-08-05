@@ -3,9 +3,12 @@ import { getFinanceValidationData } from "@/server/finance-validation";
 import { MetricCell } from "@/components/control-room/MetricCell";
 import { RouteSelector } from "@/components/finance/RouteSelector";
 import { formatMoney } from "@/lib/format";
+import { ApprovalChainPanel } from "@/components/approvals/ApprovalChainPanel";
+import { decideFinancePaymentAuthorizationStep } from "@/server/actions/approval-actions";
+import { getActorRole } from "@/lib/auth";
 
 const TABS = ["Decision Pack", "Line Validation", "Tax & Deductions", "Route & Sequence", "Documents", "Workflow & Audit"] as const;
-const REAL_TABS: (typeof TABS)[number][] = ["Decision Pack", "Line Validation", "Tax & Deductions", "Route & Sequence"];
+const REAL_TABS: (typeof TABS)[number][] = ["Decision Pack", "Line Validation", "Tax & Deductions", "Route & Sequence", "Workflow & Audit"];
 
 export default async function FinanceValidationPage({
   params,
@@ -18,6 +21,7 @@ export default async function FinanceValidationPage({
   const { tab: tabParam } = await searchParams;
   const data = await getFinanceValidationData(projectId, validationId);
   if (!data) notFound();
+  const actorRole = await getActorRole();
 
   const defaultTab = data.fv.status === "PENDING" ? "Route & Sequence" : "Decision Pack";
   const activeTab = TABS.includes((tabParam ?? "") as (typeof TABS)[number]) ? (tabParam as (typeof TABS)[number]) : defaultTab;
@@ -216,6 +220,26 @@ export default async function FinanceValidationPage({
               <div className="mt-1 text-c1x-ink">{lockedRoute.sequence}</div>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === "Workflow & Audit" && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_var(--c1x-sidecar-w)]">
+          <ApprovalChainPanel
+            title="Finance Payment Authorization (Accountant → MD)"
+            chain={data.paymentAuthorizationChain}
+            actorRole={actorRole}
+            projectReference={data.project.reference}
+            subjectReference={data.fv.reference}
+            decideAction={decideFinancePaymentAuthorizationStep}
+          />
+          <div className="h-fit rounded-[var(--c1x-radius-surface)] border border-c1x-line bg-c1x-surface p-3 text-[11px] text-c1x-muted-2">
+            Added Checkpoint 12 — sourced from the source workbook&apos;s FINANCE VALIDATION sheet (Accountant/MD
+            columns) and the MD APPROVAL CORRECTION QA sheet (&ldquo;ELIGIBLE FOR PAYMENT only when MD approval is
+            APPROVED and Accountant has not rejected&rdquo;). Only actionable once the route is validated and locked.
+            This chain must be fully APPROVED before a Payment Voucher can be opened on Page 08 — see
+            CHECKPOINT_12_REPORT.md.
+          </div>
         </div>
       )}
 

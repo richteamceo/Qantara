@@ -16,6 +16,7 @@ import {
   purchaseOrderLines,
   fulfilmentEntries,
   paymentVouchers,
+  approvalSteps,
 } from "./schema";
 
 /**
@@ -190,6 +191,54 @@ async function seed() {
     ])
     .returning();
 
+  // Checkpoint 12 — Request Authorization chain (Procurement -> Finance/
+  // Admin -> MD), backfilled as fully APPROVED for the golden fixture.
+  // The golden request was already APPROVED with a package/award/PO/PV
+  // chain downstream when Checkpoints 1-11 seeded it; this is the real
+  // 3-tier sign-off the workbook's REQUESTER/PROCUREMENT sheets evidence
+  // must have happened before that package could exist — backfilled with
+  // timestamps between the request's creation (2026-07-20) and the
+  // earliest quotation (2026-07-24), not fabricated as instantaneous. See
+  // CHECKPOINT_12_REPORT.md.
+  await db.insert(approvalSteps).values([
+    {
+      chainType: "REQUEST_AUTHORIZATION",
+      subjectId: request.id,
+      subjectReference: request.reference,
+      stepNo: 1,
+      stepRole: "PROCUREMENT",
+      stepLabel: "Procurement Approval",
+      decision: "APPROVED",
+      decidedByRole: "PROCUREMENT",
+      decidedAt: new Date("2026-07-20T14:00:00Z"),
+      comment: "Authorized for procurement — backfilled Checkpoint 12.",
+    },
+    {
+      chainType: "REQUEST_AUTHORIZATION",
+      subjectId: request.id,
+      subjectReference: request.reference,
+      stepNo: 2,
+      stepRole: "FINANCE",
+      stepLabel: "Finance / Admin Approval",
+      decision: "APPROVED",
+      decidedByRole: "FINANCE",
+      decidedAt: new Date("2026-07-21T09:00:00Z"),
+      comment: null,
+    },
+    {
+      chainType: "REQUEST_AUTHORIZATION",
+      subjectId: request.id,
+      subjectReference: request.reference,
+      stepNo: 3,
+      stepRole: "MANAGING_DIRECTOR",
+      stepLabel: "Managing Director Approval",
+      decision: "APPROVED",
+      decidedByRole: "MANAGING_DIRECTOR",
+      decidedAt: new Date("2026-07-21T15:00:00Z"),
+      comment: null,
+    },
+  ]);
+
   // Demo request — NOT part of the golden-transaction-fixture.json
   // authority. Added in Checkpoint 2 because the golden request is already
   // APPROVED with a package/award/PO/PV downstream, so it can't exercise
@@ -246,6 +295,95 @@ async function seed() {
         "consistent with its cited BOQ source.",
     })
     .returning();
+
+  // Checkpoint 12 — same backfill for the demo request: its package
+  // (below) already existed as of Checkpoint 3, so its Request
+  // Authorization chain must already be APPROVED too.
+  await db.insert(approvalSteps).values([
+    {
+      chainType: "REQUEST_AUTHORIZATION",
+      subjectId: demoRequest.id,
+      subjectReference: demoRequest.reference,
+      stepNo: 1,
+      stepRole: "PROCUREMENT",
+      stepLabel: "Procurement Approval",
+      decision: "APPROVED",
+      decidedByRole: "PROCUREMENT",
+      decidedAt: new Date("2026-08-03T15:00:00Z"),
+      comment: "Backfilled Checkpoint 12.",
+    },
+    {
+      chainType: "REQUEST_AUTHORIZATION",
+      subjectId: demoRequest.id,
+      subjectReference: demoRequest.reference,
+      stepNo: 2,
+      stepRole: "FINANCE",
+      stepLabel: "Finance / Admin Approval",
+      decision: "APPROVED",
+      decidedByRole: "FINANCE",
+      decidedAt: new Date("2026-08-03T16:00:00Z"),
+      comment: null,
+    },
+    {
+      chainType: "REQUEST_AUTHORIZATION",
+      subjectId: demoRequest.id,
+      subjectReference: demoRequest.reference,
+      stepNo: 3,
+      stepRole: "MANAGING_DIRECTOR",
+      stepLabel: "Managing Director Approval",
+      decision: "APPROVED",
+      decidedByRole: "MANAGING_DIRECTOR",
+      decidedAt: new Date("2026-08-03T17:00:00Z"),
+      comment: null,
+    },
+  ]);
+
+  // Second demo request — added Checkpoint 12. MR-DEMO-0001 above is
+  // already APPROVED-with-package (backfilled), so it can no longer
+  // exercise the Request Authorization chain live. This one starts at
+  // SUBMITTED with no chain decisions and no package, specifically so
+  // Checkpoint 12's evidence can drive the real Procurement -> Finance/
+  // Admin -> MD sequence live in the browser, including the blocked ->
+  // allowed transition on "Approve & Prepare Package". Real BOQ line
+  // (verified: BOQ MASTER row 97, item MASON-GF-BLK100-097 — 99.416 m2
+  // available, real rate USD 15.67/m2).
+  const [demoRequest2] = await db
+    .insert(requests)
+    .values({
+      projectId: project.id,
+      controlAccountId: masonryAccount.id,
+      reference: "MR-DEMO-0002",
+      controlledEstimate: "783.50",
+      currency: "USD",
+      status: "SUBMITTED",
+      requestedBy: "Site QS Team",
+      workArea: "Ground Floor — Partition Walls",
+      needByDate: new Date("2026-08-25T00:00:00Z"),
+      priority: "STANDARD",
+      createdAt: new Date("2026-08-05T08:00:00Z"),
+      isDemoData: true,
+      demoNote:
+        "Added Checkpoint 12 to live-exercise the new Request Authorization chain (Procurement -> Finance/Admin -> " +
+        "MD) from scratch — MR-DEMO-0001 already had this backfilled as APPROVED. See CHECKPOINT_12_REPORT.md.",
+    })
+    .returning();
+
+  await db.insert(requestLines).values({
+    requestId: demoRequest2.id,
+    lineNo: 1,
+    description: "100mm hollow concrete block — GF partition & external",
+    costType: "MAT",
+    authorityType: "BOQ",
+    authorityReference: "MASON-GF-BLK100-097",
+    requestedQty: "50.000",
+    requestedUnit: "m2",
+    exposureAmount: "783.50",
+    exposureCurrency: "USD",
+    boqAvailableQty: "99.416",
+    boqSourceNote:
+      "Verified: BOQ MASTER row 97, item MASON-GF-BLK100-097 — 99.416 m2 available (0 issued), real rate " +
+      "USD 15.67/m2. Exposure (50 x 15.67 = USD 783.50) computed at the workbook's own real rate.",
+  });
 
   const [pkg] = await db
     .insert(procurementPackages)
@@ -482,6 +620,40 @@ async function seed() {
       validatedAt: new Date("2026-08-01T09:00:00Z"),
     })
     .returning();
+
+  // Checkpoint 12 — Finance Payment Authorization chain (Accountant ->
+  // MD), backfilled as fully APPROVED for the golden fixture — its PV was
+  // already PAID when Checkpoints 1-11 seeded it, so this real sign-off
+  // (source: FINANCE VALIDATION sheet's Accountant/MD columns) must
+  // already have happened. Timestamped after route validation/lock
+  // (2026-08-01T09:00) and before PO issuance (2026-08-02T10:00), not
+  // fabricated as instantaneous.
+  await db.insert(approvalSteps).values([
+    {
+      chainType: "FINANCE_PAYMENT_AUTHORIZATION",
+      subjectId: fv.id,
+      subjectReference: fv.reference,
+      stepNo: 1,
+      stepRole: "ACCOUNTANT",
+      stepLabel: "Accountant Approval",
+      decision: "APPROVED",
+      decidedByRole: "ACCOUNTANT",
+      decidedAt: new Date("2026-08-01T11:00:00Z"),
+      comment: "Backfilled Checkpoint 12.",
+    },
+    {
+      chainType: "FINANCE_PAYMENT_AUTHORIZATION",
+      subjectId: fv.id,
+      subjectReference: fv.reference,
+      stepNo: 2,
+      stepRole: "MANAGING_DIRECTOR",
+      stepLabel: "Managing Director Approval",
+      decision: "APPROVED",
+      decidedByRole: "MANAGING_DIRECTOR",
+      decidedAt: new Date("2026-08-01T14:00:00Z"),
+      comment: null,
+    },
+  ]);
 
   const [po] = await db
     .insert(purchaseOrders)

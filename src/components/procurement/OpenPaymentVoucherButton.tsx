@@ -38,6 +38,11 @@ export function OpenPaymentVoucherButton({
       {result && result.status === "not_posted" && (
         <div className="text-[11px] text-c1x-amber">Receipt must be posted before a voucher can be opened.</div>
       )}
+      {result && result.status === "payment_authorization_incomplete" && (
+        <div className="text-[11px] text-c1x-red">
+          {result.reason} — see the Finance Validation page&apos;s Workflow &amp; Audit tab (Checkpoint 12).
+        </div>
+      )}
       {result && result.status === "not_found" && <div className="text-[11px] text-c1x-amber">Fulfilment not found.</div>}
       {result && result.status === "forbidden" && (
         <div className="text-[11px] text-c1x-red">

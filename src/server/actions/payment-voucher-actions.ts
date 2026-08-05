@@ -3,13 +3,15 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { fulfilmentEntries, purchaseOrderLines, paymentVouchers } from "@/db/schema";
+import { fulfilmentEntries, purchaseOrderLines, purchaseOrders, financeValidations, paymentVouchers } from "@/db/schema";
 import { getActorRole, requireRole, type Role } from "@/lib/auth";
+import { isChainApproved } from "@/server/approvals";
 
 export type OpenPaymentVoucherResult =
   | { status: "opened"; voucherReference: string }
   | { status: "already_open"; voucherReference: string }
   | { status: "not_posted" }
+  | { status: "payment_authorization_incomplete"; reason: string }
   | { status: "not_found" }
   | { status: "forbidden"; requiredRole: Role; actorRole: Role };
 
@@ -29,6 +31,14 @@ export type OpenPaymentVoucherResult =
  * real 20% VAT+NHIL+GETFund rate as PAGE_06/PAGE_07); WHT is an indicative
  * 2% of net at the payable event (same rate PAGE_06's own fixture
  * established in Checkpoint 4).
+ *
+ * Checkpoint 12 addition: also requires the Finance Payment Authorization
+ * chain (Accountant -> MD, see src/server/approvals.ts) on the source
+ * Finance Validation to be fully APPROVED first — sourced directly from
+ * the workbook's FINANCE VALIDATION sheet ("ELIGIBLE FOR PAYMENT ... only
+ * when MD approval is APPROVED and Accountant has not rejected", MD
+ * APPROVAL CORRECTION QA) and BR-APR-002. Server-side, not just a
+ * disabled button — see CHECKPOINT_12_REPORT.md.
  */
 export async function openPaymentVoucher(
   projectReference: string,
@@ -47,6 +57,19 @@ export async function openPaymentVoucher(
 
   const line = await db.query.purchaseOrderLines.findFirst({ where: eq(purchaseOrderLines.id, fulfilment.purchaseOrderLineId) });
   if (!line) return { status: "not_found" };
+
+  const po = await db.query.purchaseOrders.findFirst({ where: eq(purchaseOrders.id, fulfilment.purchaseOrderId) });
+  if (!po) return { status: "not_found" };
+  const fv = await db.query.financeValidations.findFirst({ where: eq(financeValidations.id, po.financeValidationId) });
+  if (!fv) return { status: "not_found" };
+
+  const paymentChainApproved = await isChainApproved("FINANCE_PAYMENT_AUTHORIZATION", fv.id, fv.reference);
+  if (!paymentChainApproved) {
+    return {
+      status: "payment_authorization_incomplete",
+      reason: `Finance Payment Authorization chain (Accountant → MD) on ${fv.reference} is not fully approved yet`,
+    };
+  }
 
   const orderedQty = Number(line.quantity);
   const acceptedQty = Number(fulfilment.acceptedQty);

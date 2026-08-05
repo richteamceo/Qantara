@@ -1,9 +1,92 @@
 {
-  "id": "b138ce8e-6dc5-444e-b1de-1690770f05fc",
+  "id": "1ef44244-57af-4c2c-9876-3944cf9ce1c6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.approval_steps": {
+      "name": "approval_steps",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "chain_type": {
+          "name": "chain_type",
+          "type": "approval_chain_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_reference": {
+          "name": "subject_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step_no": {
+          "name": "step_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step_role": {
+          "name": "step_role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step_label": {
+          "name": "step_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "decision": {
+          "name": "decision",
+          "type": "approval_decision",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING'"
+        },
+        "decided_by_role": {
+          "name": "decided_by_role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "comment": {
+          "name": "comment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.audit_events": {
       "name": "audit_events",
       "schema": "",
@@ -1453,11 +1536,30 @@
     }
   },
   "enums": {
+    "public.approval_chain_type": {
+      "name": "approval_chain_type",
+      "schema": "public",
+      "values": [
+        "REQUEST_AUTHORIZATION",
+        "FINANCE_PAYMENT_AUTHORIZATION"
+      ]
+    },
+    "public.approval_decision": {
+      "name": "approval_decision",
+      "schema": "public",
+      "values": [
+        "PENDING",
+        "APPROVED",
+        "REJECTED",
+        "RETURNED"
+      ]
+    },
     "public.audit_event_type": {
       "name": "audit_event_type",
       "schema": "public",
       "values": [
-        "DOCUMENT_EXPORT"
+        "DOCUMENT_EXPORT",
+        "APPROVAL_DECISION"
       ]
     },
     "public.award_status": {

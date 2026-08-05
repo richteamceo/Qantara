@@ -15,6 +15,8 @@ export const ROLES = [
   "RECEIVER",
   "AP_TREASURY",
   "AUDITOR",
+  "MANAGING_DIRECTOR",
+  "ACCOUNTANT",
 ] as const;
 
 export type Role = (typeof ROLES)[number];
@@ -28,6 +30,17 @@ export const ROLE_LABELS: Record<Role, string> = {
   RECEIVER: "Storekeeper / Receiver",
   AP_TREASURY: "AP / Treasury",
   AUDITOR: "Auditor",
+  /**
+   * Added Checkpoint 12 — sourced directly from the source workbook
+   * (Cost Control System.xlsm), not invented. REQUESTER/PROCUREMENT
+   * sheets name a "③ MANAGING DIRECTOR APPROVAL" step distinct from
+   * PROJECT_DIRECTOR (which was a CORE1X SoD-matrix role for a different
+   * transition, "Approve & Send to Finance"); FINANCE VALIDATION sheet
+   * names a distinct "ACCOUNTANT APPROVAL" column, separate from the
+   * FINANCE role's route-lock function. See CHECKPOINT_12_REPORT.md.
+   */
+  MANAGING_DIRECTOR: "Managing Director",
+  ACCOUNTANT: "Accountant",
 };
 
 export type PermissionResult = { ok: true } | { ok: false; requiredRole: Role; actorRole: Role };

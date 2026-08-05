@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import { getRequestDossierData } from "@/server/request-dossier";
 import { MetricCell } from "@/components/control-room/MetricCell";
 import { ApprovePrepareButton } from "@/components/requests/ApprovePrepareButton";
+import { ApprovalChainPanel } from "@/components/approvals/ApprovalChainPanel";
+import { decideRequestAuthorizationStep } from "@/server/actions/approval-actions";
+import { getActorRole } from "@/lib/auth";
 
 const TABS = ["Overview", "Lines & Allocations", "Commercial Controls", "Documents", "Workflow", "Audit Trail"] as const;
 
@@ -16,6 +19,7 @@ export default async function RequestDossierPage({
   const { tab: tabParam } = await searchParams;
   const data = await getRequestDossierData(projectId, requestId);
   if (!data) notFound();
+  const actorRole = await getActorRole();
 
   const activeTab = TABS.includes((tabParam ?? "") as (typeof TABS)[number])
     ? (tabParam as (typeof TABS)[number])
@@ -145,7 +149,7 @@ export default async function RequestDossierPage({
                 }`}
               >
                 {tab}
-                {!["Overview", "Lines & Allocations", "Commercial Controls"].includes(tab) && (
+                {!["Overview", "Lines & Allocations", "Commercial Controls", "Workflow"].includes(tab) && (
                   <span className="ml-1.5 rounded-full bg-c1x-surface-soft px-1.5 py-0.5 text-[10px] text-c1x-muted-2">
                     soon
                   </span>
@@ -279,7 +283,25 @@ export default async function RequestDossierPage({
         </div>
       )}
 
-      {!["Overview", "Lines & Allocations", "Commercial Controls"].includes(activeTab) && (
+      {activeTab === "Workflow" && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_var(--c1x-sidecar-w)]">
+          <ApprovalChainPanel
+            title="Request Authorization (Procurement → Finance/Admin → MD)"
+            chain={data.approvalChain}
+            actorRole={actorRole}
+            projectReference={data.project.reference}
+            subjectReference={data.request.reference}
+            decideAction={decideRequestAuthorizationStep}
+          />
+          <div className="h-fit rounded-[var(--c1x-radius-surface)] border border-c1x-line bg-c1x-surface p-3 text-[11px] text-c1x-muted-2">
+            Added Checkpoint 12 — sourced from the source workbook&apos;s REQUESTER/PROCUREMENT sheets (columns ①②③)
+            and BR-APR-001/002. This chain must be fully APPROVED before &ldquo;Approve &amp; Prepare Package&rdquo; is
+            enabled. Not implemented: claim/unclaim, delegation, escalation/SLA — see CHECKPOINT_12_REPORT.md.
+          </div>
+        </div>
+      )}
+
+      {!["Overview", "Lines & Allocations", "Commercial Controls", "Workflow"].includes(activeTab) && (
         <div className="rounded-[var(--c1x-radius-surface)] border border-c1x-line bg-c1x-surface p-6 text-sm text-c1x-muted">
           <strong className="text-c1x-ink">{activeTab}</strong> is part of the approved page contract but is not
           implemented in Checkpoint 2 — disclosed gap, not a broken control.

@@ -1,0 +1,29 @@
+{
+  "checkpoint": 12,
+  "pages": [
+    "Request Dossier (P03) — new Workflow tab: Request Authorization chain",
+    "Finance Validation (P06) — new Workflow & Audit tab: Finance Payment Authorization chain",
+    "Purchase Order (P07) / Fulfilment (P08) / Payment Voucher (P09) — Chain B gate integration",
+    "Control Room (P01) — regression check"
+  ],
+  "capturedWith": "Real Playwright/chromium at /opt/pw-browsers/chromium, 1440x900, driving real server actions against a freshly migrated + reseeded local Postgres, 2026-08-05",
+  "artifacts": [
+    { "file": "01-mr-demo-0002-workflow-pending.png", "sha256": "b686585812949b44a08bfe72cc28b1f151734968d164820b088afc1452cfc19a", "state": "MR-DEMO-0002 (fresh, SUBMITTED, no chain decisions yet) — Request Authorization chain PENDING, Approve & Prepare Package disabled" },
+    { "file": "02-step1-procurement-approved.png", "sha256": "62d39f4b236847d2fe83a668eea534ff68b3e5bdefc9076ea2f175cd803b85ec", "state": "Acting as Procurement Officer — Step 1 decided APPROVED with comment" },
+    { "file": "03-step2-finance-approved.png", "sha256": "7d353b6d49df84179600b6c6fd5b01ffed51202edd0674adf98999a78113ff9a", "state": "Acting as Finance Reviewer — Step 2 decided APPROVED (only actionable after Step 1 APPROVED)" },
+    { "file": "04-step3-md-approved-chain-complete.png", "sha256": "d09c6b7ed0c71b20e91bcf9e64819985869d7a3035ea01ecc9c669937db5f35c", "state": "Acting as Managing Director — Step 3 decided APPROVED, chain overall status APPROVED" },
+    { "file": "05-package-created-after-chain-approved.png", "sha256": "e79a5cafc52f36e3442a34395516f6d21fde54fa786c1d44d18da0487160b781", "state": "Acting as QS/Commercial Lead — 'Approve & Prepare Package' now enabled (was server-blocked before), clicked, package created" },
+    { "file": "06-fv-demo-0001-chain-before-route-lock.png", "sha256": "47356097d8b2b760233f591dc995a12f431fbf0f510aec8cf8efbf09926911ff", "state": "FV-DEMO-0001 before route lock — Finance Payment Authorization chain steps shown PENDING and not actionable, blocked reason displayed" },
+    { "file": "07-fv-demo-0001-route-locked.png", "sha256": "10a812a1a9e49a80a88228019a62f4f67066d750d7028ae3c4341254d78a1434", "state": "Route validated & locked CREDIT (pre-existing Checkpoint 4 transition, unaffected by this checkpoint) — PO-DEMO-0001 created" },
+    { "file": "08-fv-demo-0001-chain-actionable-after-lock.png", "sha256": "256d6e1d31f8f358b8a95a3fdd3c5013af02605c7dd2d64f4f0a8d9545263a1d", "state": "Chain now actionable — Step 1 (Accountant) unblocked once fv.status = VALIDATED" },
+    { "file": "09-fv-demo-0001-accountant-approved.png", "sha256": "822c606c3bbc5b40bc70f1a62d7b5fccbb5a69f4cfdff09cd91a117308f6ca83", "state": "Acting as Accountant — Step 1 decided APPROVED" },
+    { "file": "10-fv-demo-0001-md-approved-chainb-complete.png", "sha256": "c84b42444f9835ce14cb0ed619fca0231a52dc61fde17b75d40328006f517bbb", "state": "Acting as Managing Director — Step 2 decided APPROVED, chain overall status APPROVED" },
+    { "file": "11-fulfilment-posted.png", "sha256": "787b078f26b79b2f899aec31c9cb4e77828aaee4fc678e60b75513b0580e671d", "state": "GRN-DEMO-0001-L1 posted (Acting as Storekeeper/Receiver) — prerequisite to exercise the payment-voucher gate end to end" },
+    { "file": "12-payment-voucher-opened-chainb-unblocked.png", "sha256": "1264281b7237f7bc644a374f89e55dfdc718a6e2934acb512ecc4790256fb4b0", "state": "PV-DEMO-0001 opened successfully — proves openPaymentVoucher's server-side Chain B gate (payment_authorization_incomplete) actually unblocks once both steps are APPROVED, not just a UI-level check" },
+    { "file": "13-golden-request-chain-backfilled.png", "sha256": "cd6f91eafa451598df4eb185b253fd3ff247181d01a7b8991ac3084ae1949794", "state": "Golden request MR-SWTBK-2026-0035 — Request Authorization chain backfilled APPROVED (regression check, no live action)" },
+    { "file": "14-golden-fv-chainb-backfilled.png", "sha256": "fdf688adb568cf872c556a6819bc280ecbf3620f9148962607451d4a090c374d", "state": "Golden Finance Validation FV-2026-018 — Finance Payment Authorization chain backfilled APPROVED (regression check)" },
+    { "file": "15-control-room-regression-check.png", "sha256": "93e048405fe62607d7f3d11bafd970e720024c3622cf62004497b5dae7d36fd9", "state": "Control Room after all live transitions — golden fixture's Cash paid (GHS 206,443) and Structural Concrete figures unchanged from Checkpoints 1-11; Block & Masonry account reflects the new live-driven demo activity" }
+  ],
+  "consoleErrors": "Zero browser console errors/warnings across the full run (checked via dev server log grep for '[browser]' entries) — includes fixing one real defect found during this checkpoint's own verification, see CHECKPOINT_12_REPORT.md §16",
+  "rawLogs": ["run-log.json", "run-log-part2.json", "run-log-part3.json"]
+}
