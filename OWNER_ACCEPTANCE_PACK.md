@@ -1,6 +1,6 @@
 # CORE1X — Owner Acceptance Pack
 
-Consolidated summary across Checkpoints 0–8. Checkpoints 0–7 follow
+Consolidated summary across Checkpoints 0–9. Checkpoints 0–7 follow
 `05_CLAUDE_CODE_EXECUTION/CONTROLLED_BUILD_AND_CHECKPOINT_PROGRAMME.md`,
 which ends at Checkpoint 7; Checkpoint 8 is self-scoped (see
 `CHECKPOINT_8_REPORT.md` §1) since the pack does not define what comes
@@ -28,6 +28,7 @@ check as of Checkpoint 7.
 | 6 | Page 09 Payment Voucher, end-to-end golden closure | `CHECKPOINT_6_REPORT.md` |
 | 7 | Phase-1 hardening: RBAC/SoD, accessibility, regression | `CHECKPOINT_7_REPORT.md` |
 | 8 | Self-scoped: real PDF generation for PO/PV, export audit logging | `CHECKPOINT_8_REPORT.md` |
+| 9 | Self-scoped: backup/restore drill with corruption-detection proof | `CHECKPOINT_9_REPORT.md` |
 
 Every checkpoint's status is **NOT OWNER-ACCEPTED**. This pack does not
 change that — it is a navigation aid for review, not a self-certification.
@@ -80,6 +81,7 @@ already disclosed individually in their originating checkpoint report:
 | No PDF pagination (multi-page documents) | CP8 | A PO/PV with enough lines to exceed one page would draw off the bottom of the page; not reachable with current seed data (max 3 lines) |
 | Only 2 of ~14 required document types have real PDF generation | CP8 | PO and PV only; RFQs, GRNs, board packs, quotation comparisons, etc. not attempted |
 | Pre-existing dev-only `esbuild`/`drizzle-kit` moderate advisory | CP8 (found) | Dev-server-only, not shipped in the app; fix requires a breaking `drizzle-kit` downgrade — not applied, see CHECKPOINT_8_REPORT.md §15 |
+| Backup/restore only drilled against a local single-node Postgres | CP9 | Mechanism (backup, restore, reconciliation, corruption-detection) proven for real; the pack's 4-hour RTO / 15-minute RPO targets at production Multi-AZ scale are not — no continuous point-in-time-recovery/WAL archiving exists in this sandbox |
 
 ## 5. Verification performed
 
@@ -87,6 +89,7 @@ already disclosed individually in their originating checkpoint report:
 - Every checkpoint's primary transition(s) exercised live in a real browser (Playwright/chromium), not just unit-tested against the server function.
 - Checkpoint 7 additionally: a full regression screenshot pass across all 9 pages + Control Room from a fresh reseed (`evidence/v7/checkpoint-7/regression/`), a live blocked-then-allowed demonstration of 5 role-gated transitions (`evidence/v7/checkpoint-7/rbac/`), and an axe-core WCAG 2 A/AA scan across 6 representative pages.
 - No automated test suite exists at any checkpoint (disclosed gap, every report).
+- Checkpoint 9 additionally: a live backup/restore/reconciliation drill including a simulated data-corruption incident, proving the reconciliation check correctly fails on real corruption (not just passes on clean data) before demonstrating full recovery (`evidence/v7/checkpoint-9/disaster-recovery-drill-transcript.md`).
 
 ## 6. Reproduction
 
@@ -101,6 +104,7 @@ Fresh clone → `npm install` → `npx drizzle-kit migrate` → `npx tsx src/db/
 5. Real authentication (replacing the Checkpoint 7 simulated role switcher) — priority for the next checkpoint, or continue with further page/contract depth first?
 6. Confirm "professional outputs" (CP8) was an acceptable checkpoint to self-scope, or specify a different area from the remaining Phase-1 hardening basket (security/SAST, performance/load testing, migration, integration, backup/restore, observability) going forward.
 7. The pre-existing `drizzle-kit`/`esbuild` dev-dependency advisory (CP8) — accept as dev-only risk or invest in the breaking downgrade.
+8. Is a local pg_dump/restore drill (CP9) sufficient evidence for this build's current stage, or should backup/restore be re-tested against a real managed-database environment before that gap is considered closed?
 
 ## 8. Status
 
@@ -113,6 +117,6 @@ unaccepted page slice in implementation").
 
 Owner acceptance (to be completed by the owner, not by Claude Code):
 
-- [ ] Reviewed and accepted: Checkpoints 0–8
+- [ ] Reviewed and accepted: Checkpoints 0–9
 - Signed:
 - Date:

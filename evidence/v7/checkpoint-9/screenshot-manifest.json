@@ -1,0 +1,12 @@
+{
+  "checkpoint": 9,
+  "pages": ["Backup/restore drill (self-scoped from Phase-1 hardening basket — see CHECKPOINT_9_REPORT.md §1)"],
+  "capturedWith": "Real pg_dump/pg_restore + a tsx reconciliation script + Playwright, 2026-08-05",
+  "screenshots": [
+    { "file": "pv-after-recovery-1440x900.png", "sha256": "4e92bccff2163530a146a981df1d29084efe41e916a309ee90e5bd488d860abb", "state": "PV-2026-0076 loaded from the app AFTER the full corrupt->detect->recover drill — shows correct GHS 206,443 net payable, not the corrupted 0.00/999,999.00, proving application-level recovery not just a database-level check. Hash is identical to Checkpoint 8's equivalent screenshot, confirming the recovered state is visually indistinguishable from the never-corrupted original, as it should be." }
+  ],
+  "otherArtifacts": [
+    { "file": "disaster-recovery-drill-transcript.md", "note": "Full real terminal transcript: backup -> restore to isolated instance -> reconcile (pass) -> simulate corruption -> reconcile (correctly FAILS, exit code 1) -> cutback restore -> reconcile (pass again, exit code 0)" }
+  ],
+  "notesOnMissingStates": "This is a local single-node Postgres, not the pack's target Multi-AZ managed database — demonstrates the backup/restore/reconciliation mechanism works correctly, not that the 4-hour RTO / 15-minute RPO targets are met at production scale (no continuous point-in-time-recovery/WAL archiving exists in this sandbox, only point-in-time full snapshots). Region-failure and security-incident-isolation scenarios from the standard are not exercised — out of scope for what a local sandbox can meaningfully demonstrate."
+}
