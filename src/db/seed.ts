@@ -17,6 +17,7 @@ import {
   fulfilmentEntries,
   paymentVouchers,
   approvalSteps,
+  variationOrders,
 } from "./schema";
 
 /**
@@ -744,6 +745,68 @@ async function seed() {
     status: "PAID",
     paidAt: new Date("2026-08-04T12:00:00Z"),
   });
+
+  // Variation Orders — added Checkpoint 13. Unlike every other entity in
+  // this build, there is no real workbook VO to source: the source
+  // workbook's 📋 VO REGISTER sheet has zero data rows (TOTAL VOs RAISED
+  // = 0). Both VOs below are disclosed demo data, referencing real BOQ
+  // codes/rates already verified and seeded elsewhere in this file
+  // (CONC-SUB-RAFT-014 USD 142.75/m3, MASON-GF-BLK150-098 USD 19.19/m2)
+  // so the VO value itself is not invented, only the triggering scenario.
+  await db.insert(variationOrders).values([
+    {
+      projectId: project.id,
+      controlAccountId: controlAccount.id,
+      voNumber: "VO-SWTBK-2026-001",
+      dateRaised: new Date("2026-08-04T10:00:00Z"),
+      tradeCode: "03-SUB",
+      description: "Additional raft foundation depth per revised structural drawing SK-104 Rev C",
+      originator: "Site QS Team",
+      instructionRef: "AI-014",
+      drawingRef: "SK-104 Rev C",
+      boqItemRef: "CONC-SUB-RAFT-014",
+      unit: "m3",
+      quantity: "15.000",
+      rate: "142.75",
+      voValue: "2141.25",
+      currency: "USD",
+      status: "PENDING",
+      contractImpact: "Increases contract sum — BOQ quantity insufficient for revised raft depth.",
+      remarks: null,
+      isDemoData: true,
+      demoNote:
+        "Added Checkpoint 13 to exercise the raise/approve transitions live — the source workbook's VO REGISTER " +
+        "sheet has zero real rows to seed from. Value computed at the same real BOQ rate as the golden fixture's " +
+        "own concrete line (CONC-SUB-RAFT-014, USD 142.75/m3).",
+    },
+    {
+      projectId: project.id,
+      controlAccountId: masonryAccount.id,
+      voNumber: "VO-SWTBK-2026-002",
+      dateRaised: new Date("2026-08-01T09:00:00Z"),
+      tradeCode: "04-GF",
+      description: "Additional 150mm block partition per client instruction CI-009",
+      originator: "Site QS Team",
+      instructionRef: "CI-009",
+      drawingRef: null,
+      boqItemRef: "MASON-GF-BLK150-098",
+      unit: "m2",
+      quantity: "25.000",
+      rate: "19.19",
+      voValue: "479.75",
+      currency: "USD",
+      status: "APPROVED",
+      approvedByRole: "MANAGING_DIRECTOR",
+      approvalDate: new Date("2026-08-02T11:00:00Z"),
+      contractImpact: "Approved — added to contract sum; additional scope, no BOQ baseline quantity impact.",
+      remarks: null,
+      isDemoData: true,
+      demoNote:
+        "Added Checkpoint 13 as an already-decided demo row (APPROVED) so the register has real state variety, " +
+        "not just a single pending item. Value computed at the same real BOQ rate as MR-DEMO-0001's line " +
+        "(MASON-GF-BLK150-098, USD 19.19/m2).",
+    },
+  ]);
 
   console.log("Seeded golden transaction fixture:", {
     organisation: org.name,

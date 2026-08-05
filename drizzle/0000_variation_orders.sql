@@ -10,6 +10,7 @@ CREATE TYPE "public"."payment_voucher_status" AS ENUM('DRAFT', 'APPROVED', 'PAID
 CREATE TYPE "public"."purchase_order_status" AS ENUM('ISSUED', 'AMENDED', 'CLOSED');--> statement-breakpoint
 CREATE TYPE "public"."request_line_authority_type" AS ENUM('BOQ', 'EXCEPTION');--> statement-breakpoint
 CREATE TYPE "public"."request_status" AS ENUM('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED');--> statement-breakpoint
+CREATE TYPE "public"."variation_order_status" AS ENUM('PENDING', 'APPROVED', 'REJECTED');--> statement-breakpoint
 CREATE TABLE "approval_steps" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"chain_type" "approval_chain_type" NOT NULL,
@@ -226,6 +227,33 @@ CREATE TABLE "requests" (
 	CONSTRAINT "requests_reference_unique" UNIQUE("reference")
 );
 --> statement-breakpoint
+CREATE TABLE "variation_orders" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"project_id" uuid NOT NULL,
+	"control_account_id" uuid NOT NULL,
+	"vo_number" text NOT NULL,
+	"date_raised" timestamp with time zone NOT NULL,
+	"trade_code" text NOT NULL,
+	"description" text NOT NULL,
+	"originator" text NOT NULL,
+	"instruction_ref" text,
+	"drawing_ref" text,
+	"boq_item_ref" text NOT NULL,
+	"unit" text NOT NULL,
+	"quantity" numeric(18, 3) NOT NULL,
+	"rate" numeric(18, 4) NOT NULL,
+	"vo_value" numeric(18, 2) NOT NULL,
+	"currency" text NOT NULL,
+	"status" "variation_order_status" DEFAULT 'PENDING' NOT NULL,
+	"approved_by_role" text,
+	"approval_date" timestamp with time zone,
+	"contract_impact" text,
+	"remarks" text,
+	"is_demo_data" boolean DEFAULT true NOT NULL,
+	"demo_note" text,
+	CONSTRAINT "variation_orders_vo_number_unique" UNIQUE("vo_number")
+);
+--> statement-breakpoint
 ALTER TABLE "award_decisions" ADD CONSTRAINT "award_decisions_package_id_procurement_packages_id_fk" FOREIGN KEY ("package_id") REFERENCES "public"."procurement_packages"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "award_lines" ADD CONSTRAINT "award_lines_award_id_award_decisions_id_fk" FOREIGN KEY ("award_id") REFERENCES "public"."award_decisions"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "award_lines" ADD CONSTRAINT "award_lines_request_line_id_request_lines_id_fk" FOREIGN KEY ("request_line_id") REFERENCES "public"."request_lines"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -243,4 +271,6 @@ ALTER TABLE "purchase_orders" ADD CONSTRAINT "purchase_orders_finance_validation
 ALTER TABLE "quotations" ADD CONSTRAINT "quotations_package_id_procurement_packages_id_fk" FOREIGN KEY ("package_id") REFERENCES "public"."procurement_packages"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request_lines" ADD CONSTRAINT "request_lines_request_id_requests_id_fk" FOREIGN KEY ("request_id") REFERENCES "public"."requests"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "requests" ADD CONSTRAINT "requests_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "requests" ADD CONSTRAINT "requests_control_account_id_control_accounts_id_fk" FOREIGN KEY ("control_account_id") REFERENCES "public"."control_accounts"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "requests" ADD CONSTRAINT "requests_control_account_id_control_accounts_id_fk" FOREIGN KEY ("control_account_id") REFERENCES "public"."control_accounts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "variation_orders" ADD CONSTRAINT "variation_orders_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "variation_orders" ADD CONSTRAINT "variation_orders_control_account_id_control_accounts_id_fk" FOREIGN KEY ("control_account_id") REFERENCES "public"."control_accounts"("id") ON DELETE no action ON UPDATE no action;

@@ -1,5 +1,5 @@
 {
-  "id": "1ef44244-57af-4c2c-9876-3944cf9ce1c6",
+  "id": "275263f9-943e-400f-9f56-4f14fa73f925",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1533,6 +1533,196 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.variation_orders": {
+      "name": "variation_orders",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "control_account_id": {
+          "name": "control_account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vo_number": {
+          "name": "vo_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_raised": {
+          "name": "date_raised",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "trade_code": {
+          "name": "trade_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "originator": {
+          "name": "originator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "instruction_ref": {
+          "name": "instruction_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "drawing_ref": {
+          "name": "drawing_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "boq_item_ref": {
+          "name": "boq_item_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "numeric(18, 3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rate": {
+          "name": "rate",
+          "type": "numeric(18, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vo_value": {
+          "name": "vo_value",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "variation_order_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING'"
+        },
+        "approved_by_role": {
+          "name": "approved_by_role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approval_date": {
+          "name": "approval_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contract_impact": {
+          "name": "contract_impact",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "remarks": {
+          "name": "remarks",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_demo_data": {
+          "name": "is_demo_data",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "demo_note": {
+          "name": "demo_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "variation_orders_project_id_projects_id_fk": {
+          "name": "variation_orders_project_id_projects_id_fk",
+          "tableFrom": "variation_orders",
+          "tableTo": "projects",
+          "columnsFrom": [
+            "project_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "variation_orders_control_account_id_control_accounts_id_fk": {
+          "name": "variation_orders_control_account_id_control_accounts_id_fk",
+          "tableFrom": "variation_orders",
+          "tableTo": "control_accounts",
+          "columnsFrom": [
+            "control_account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "variation_orders_vo_number_unique": {
+          "name": "variation_orders_vo_number_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "vo_number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -1639,6 +1829,15 @@
       "values": [
         "DRAFT",
         "SUBMITTED",
+        "APPROVED",
+        "REJECTED"
+      ]
+    },
+    "public.variation_order_status": {
+      "name": "variation_order_status",
+      "schema": "public",
+      "values": [
+        "PENDING",
         "APPROVED",
         "REJECTED"
       ]

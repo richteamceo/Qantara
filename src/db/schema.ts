@@ -110,6 +110,60 @@ export const approvalChainTypeEnum = pgEnum("approval_chain_type", [
   "FINANCE_PAYMENT_AUTHORIZATION",
 ]);
 
+/**
+ * Added Checkpoint 13 — self-scoped from
+ * `CHANGE_VARIATIONS_CLAIMS_AND_FINAL_ACCOUNT_STANDARD.md`, triggered by
+ * a real gap found (not invented) during Checkpoint 12's owner-requested
+ * cross-check: the workbook's `📋 VO REGISTER` sheet evidences a complete
+ * Variation Order transaction type — raise, value against the BOQ
+ * baseline, single-actor approve — that no prior checkpoint modeled at
+ * all. That sheet's own 17 real columns are the schema below; its rows
+ * are all empty in the source workbook (TOTAL VOs RAISED = 0), so unlike
+ * every other entity in this build there is no real workbook VO to seed
+ * — every VO in this build is disclosed demo data, not a golden fixture.
+ * `status` deliberately uses the workbook's simple 3-value
+ * APPROVAL STATUS/APPROVED BY pair, not the standard's fuller 15-state
+ * exposure lifecycle (POTENTIAL/NOTIFIED/INSTRUCTED/.../DISPUTED) — a
+ * disclosed scoping-down, same pattern as every other stage in this
+ * build tracking the workbook's real behaviour over the standard's full
+ * enterprise ambition.
+ */
+export const variationOrderStatusEnum = pgEnum("variation_order_status", [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+]);
+
+export const variationOrders = pgTable("variation_orders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id),
+  controlAccountId: uuid("control_account_id")
+    .notNull()
+    .references(() => controlAccounts.id),
+  voNumber: text("vo_number").notNull().unique(),
+  dateRaised: timestamp("date_raised", { withTimezone: true }).notNull(),
+  tradeCode: text("trade_code").notNull(),
+  description: text("description").notNull(),
+  originator: text("originator").notNull(),
+  instructionRef: text("instruction_ref"),
+  drawingRef: text("drawing_ref"),
+  boqItemRef: text("boq_item_ref").notNull(),
+  unit: text("unit").notNull(),
+  quantity: numeric("quantity", { precision: 18, scale: 3 }).notNull(),
+  rate: numeric("rate", { precision: 18, scale: 4 }).notNull(),
+  voValue: numeric("vo_value", { precision: 18, scale: 2 }).notNull(),
+  currency: text("currency").notNull(),
+  status: variationOrderStatusEnum("status").notNull().default("PENDING"),
+  approvedByRole: text("approved_by_role"),
+  approvalDate: timestamp("approval_date", { withTimezone: true }),
+  contractImpact: text("contract_impact"),
+  remarks: text("remarks"),
+  isDemoData: boolean("is_demo_data").notNull().default(true),
+  demoNote: text("demo_note"),
+});
+
 export const organisations = pgTable("organisations", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),

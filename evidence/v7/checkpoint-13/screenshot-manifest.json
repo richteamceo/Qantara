@@ -1,0 +1,14 @@
+{
+  "checkpoint": 13,
+  "pages": ["Variation Order Register (new, self-scoped — no PAGE_XX contract exists for this)"],
+  "capturedWith": "Real Playwright/chromium at /opt/pw-browsers/chromium, 1440x900, driving real server actions against a freshly migrated + reseeded local Postgres, 2026-08-05",
+  "artifacts": [
+    { "file": "01-vo-register-seeded.png", "sha256": "364d9c6e2e9d7cc997ead62a95735f8f5c4ac682c6ccc7cdec19d806c788d1cc", "state": "Fresh seed: VO-SWTBK-2026-001 (PENDING) and VO-SWTBK-2026-002 (already APPROVED, demo state variety)" },
+    { "file": "02-approve-forbidden-wrong-role.png", "sha256": "b9f9fcc3fe7b4062e8fdd656cea3425b3bdeab943d7f76f498a2b3cc47416b11", "state": "Approve clicked as default role (QS/Commercial) — server-side forbidden, not just a hidden button" },
+    { "file": "03-vo-approved-by-md.png", "sha256": "e8765213a2d27f331a514e7315c833721d929e21a68839a261257ea132058c4c", "state": "Acting as Managing Director — VO-SWTBK-2026-001 approved live" },
+    { "file": "04-raise-forbidden-wrong-role.png", "sha256": "66b0b37efe04db089b7fe3e5dd82521f361e297eb77cab6c2539f7c1e95bc405", "state": "Raise form submitted while still acting as Managing Director — server-side forbidden (raising requires QS/Commercial, a different role than approving)" },
+    { "file": "05-vo-raised-live.png", "sha256": "d118deaa94e169440fc6959834b480e4c8fc3a6d816671061268f5e2f6397e33", "state": "Same form resubmitted after switching to QS/Commercial — new VO created live, register now shows 3 rows with correct per-currency KPI totals" }
+  ],
+  "consoleErrors": "Zero '[browser]' console error/warning entries across the full dev-server log for this run. One 'destination stream closed early' server log line is a leftover artifact from an earlier draft Playwright script that crashed on a bad locator before browser.close() ran — confirmed unrelated to application behavior by re-running clean against a freshly reseeded database (evidence above is from that clean run).",
+  "rawLogs": ["run-log.json"]
+}

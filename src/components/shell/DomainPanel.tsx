@@ -36,6 +36,7 @@ function groups(projectId: string): NavGroup[] {
       links: [
         { label: "BOQ & budget" },
         { label: "Commitments" },
+        { label: "Variation orders", href: `/app/projects/${projectId}/variation-orders` },
         { label: "Finance validation" },
         { label: "Payment vouchers" },
         { label: "Forecast & cashflow" },

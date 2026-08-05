@@ -1,0 +1,22 @@
+[
+  {
+    "label": "01 loaded VO register, seeded state",
+    "ts": "2026-08-05T17:04:08.712Z"
+  },
+  {
+    "label": "02 approve attempted as wrong role — forbidden",
+    "ts": "2026-08-05T17:04:09.692Z"
+  },
+  {
+    "label": "03 VO-SWTBK-2026-001 approved by MD",
+    "ts": "2026-08-05T17:04:11.265Z"
+  },
+  {
+    "label": "04 raise attempted as MD (wrong role) — forbidden",
+    "ts": "2026-08-05T17:04:12.785Z"
+  },
+  {
+    "label": "05 new VO raised live by QS/Commercial",
+    "ts": "2026-08-05T17:04:14.842Z"
+  }
+]

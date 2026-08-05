@@ -1,6 +1,6 @@
 # CORE1X — Owner Acceptance Pack
 
-Consolidated summary across Checkpoints 0–12. Checkpoints 0–7 follow
+Consolidated summary across Checkpoints 0–13. Checkpoints 0–7 follow
 `05_CLAUDE_CODE_EXECUTION/CONTROLLED_BUILD_AND_CHECKPOINT_PROGRAMME.md`,
 which ends at Checkpoint 7; Checkpoint 8 is self-scoped (see
 `CHECKPOINT_8_REPORT.md` §1) since the pack does not define what comes
@@ -36,6 +36,7 @@ across Checkpoints 1-11, not a disclosed-and-accepted simplification.
 | 10 | Self-scoped: measured performance/N+1 query audit across all 9 pages | `CHECKPOINT_10_REPORT.md` |
 | 11 | Self-scoped: security audit (secrets, injection, XSS, dependencies) | `CHECKPOINT_11_REPORT.md` |
 | 12 | **Correction, not self-scoped**: real multi-tier approval chains (Procurement → Finance/Admin → MD at Request stage; Accountant → MD at Finance Validation stage), sourced from the source workbook and the pack's own `WORKFLOW_AND_APPROVAL_ENGINE_STANDARD.md`/`BR-APR-001` — absent from Checkpoints 1-11 | `CHECKPOINT_12_REPORT.md`, `CHECKPOINT_12_ADDENDUM.md` |
+| 13 | Self-scoped: new Variation Order Register transaction type (raise → single-actor MD approve/reject against a real BOQ code/rate), sourced from `CHANGE_VARIATIONS_CLAIMS_AND_FINAL_ACCOUNT_STANDARD.md` and the workbook's `VO REGISTER` sheet — a gap surfaced by Checkpoint 12's own cross-check, not previously modeled at all | `CHECKPOINT_13_REPORT.md` |
 
 Every checkpoint's status is **NOT OWNER-ACCEPTED**. This pack does not
 change that — it is a navigation aid for review, not a self-certification.
@@ -92,6 +93,8 @@ already disclosed individually in their originating checkpoint report:
 | P06 Finance Validation re-fetches the entire project's control-room dataset for one KPI | CP10 (found) | Deliberate reuse-over-duplication trade-off, disclosed in code since it was written; doesn't scale with any single page's data, only with total project-wide request count — currently negligible (2 requests) |
 | No real auth/MFA/SSO, session/token management, rate limiting, secrets vault, upload scanning, or external pen test | CP1 (auth), CP11 (rest, found/confirmed still missing) | All require real managed infrastructure this sandbox doesn't have; CP11 verified the concretely-checkable subset (secrets, injection, XSS, dependency CVEs) is clean instead |
 | Approval engine covers only two of the workbook's evidenced approval points (Request-stage 3-tier, Finance-Validation-stage 2-tier); no claim/unclaim, delegation, escalation/SLA, effective-dated authority matrices, or organisation-configurable step sets | CP12 (found, partially fixed) | The two chains explicitly named by the owner's correction are real and server-enforced; the pack's fuller `WORKFLOW_AND_APPROVAL_ENGINE_STANDARD.md` scope (and whether other stages — Award Decision, Fulfilment, document release — also need workbook-sourced chains) is an open owner decision, see §7 items 10-11 |
+| Variation Orders are a flat register only — no time impact, disputes, rate build-up components, or PS/PC reconciliation (the standard's fuller Change Event lifecycle); approved VO value is not yet reflected in Control Room budget/commitment figures; VO decisions do not write an `AuditEvent` | CP13 | Deliberate scoping-down to the workbook-evidenced slice, disclosed in CHECKPOINT_13_REPORT.md §1/§19, not silently narrowed |
+| Every Variation Order in this build is disclosed demo data | CP13 (found) | The workbook's own `VO REGISTER` sheet has zero real data rows (`TOTAL VOs RAISED = 0`) — the one entity in this whole build with no real workbook transaction to seed from or reconcile against |
 
 ## 5. Verification performed
 
@@ -103,10 +106,11 @@ already disclosed individually in their originating checkpoint report:
 - Checkpoint 10 additionally: a real per-request SQL query counter (not a code-review assertion) measuring every page's query count against the golden fixture, confirming no N+1 pattern exists anywhere in the build (`evidence/v7/checkpoint-10/performance-audit-output.txt`).
 - Checkpoint 11 additionally: a real secret-scan (gitleaks, full git history), SQL-injection/XSS code audit, and dependency vulnerability scan (`evidence/v7/checkpoint-11/security-audit-output.txt`) — all clean; the actor-role cookie was hardened to `httpOnly`.
 - Checkpoint 12 additionally: both new approval chains driven live end-to-end from a blocked starting state to an approved, downstream-unblocked state (including proving the server-side gate on `openPaymentVoucher` actually rejects the transition while incomplete, not just disabling a button), plus a golden-fixture regression screenshot confirming no money figures moved (`evidence/v7/checkpoint-12/`).
+- Checkpoint 13 additionally: the Variation Order raise and approve/reject actions each driven live twice — once with the wrong role (real server-side `forbidden`, not a hidden button) and once with the correct role (real success) — proving the SoD gate server-side, not just in the UI (`evidence/v7/checkpoint-13/`).
 
 ## 6. Reproduction
 
-Fresh clone → `npm install` → `npx drizzle-kit migrate` → `npx tsx src/db/seed.ts` → `npm run dev`. The golden transaction is fully populated and read-only browsable immediately, including both Checkpoint 12 approval chains already backfilled as `APPROVED`. The demo transaction starts at `FV-DEMO-0001` (`PENDING`) and requires driving its live transitions in sequence (see each checkpoint report's "Reproduction" section) — as of Checkpoint 7, each transition requires switching the top-bar "Acting as" role to the one the SoD matrix assigns it (Finance for route-lock/payment-release, Procurement for PO/fulfilment-issuance, Receiver for posting receipts, QS/Commercial for package-prep and voucher-certification, Project Director for award-approval). As of Checkpoint 12: `MR-DEMO-0002` starts `SUBMITTED` with an uninitialized Request Authorization chain (Procurement → Finance/Admin → MD) to drive from its dossier's Workflow tab; `FV-DEMO-0001`'s Finance Payment Authorization chain (Accountant → MD) becomes actionable only after its route is locked, on its own Workflow & Audit tab.
+Fresh clone → `npm install` → `npx drizzle-kit migrate` → `npx tsx src/db/seed.ts` → `npm run dev`. The golden transaction is fully populated and read-only browsable immediately, including both Checkpoint 12 approval chains already backfilled as `APPROVED`. The demo transaction starts at `FV-DEMO-0001` (`PENDING`) and requires driving its live transitions in sequence (see each checkpoint report's "Reproduction" section) — as of Checkpoint 7, each transition requires switching the top-bar "Acting as" role to the one the SoD matrix assigns it (Finance for route-lock/payment-release, Procurement for PO/fulfilment-issuance, Receiver for posting receipts, QS/Commercial for package-prep and voucher-certification, Project Director for award-approval). As of Checkpoint 12: `MR-DEMO-0002` starts `SUBMITTED` with an uninitialized Request Authorization chain (Procurement → Finance/Admin → MD) to drive from its dossier's Workflow tab; `FV-DEMO-0001`'s Finance Payment Authorization chain (Accountant → MD) becomes actionable only after its route is locked, on its own Workflow & Audit tab. As of Checkpoint 13: `/app/projects/SWTBK/variation-orders` shows two seeded demo VOs (one `PENDING`, one already `APPROVED`); raising a new one requires "Acting as" QS/Commercial Lead, deciding one requires Managing Director.
 
 ## 7. Owner decision log (open items requiring a decision before further work)
 
@@ -121,7 +125,8 @@ Fresh clone → `npm install` → `npx drizzle-kit migrate` → `npx tsx src/db/
 9. Is the P06 control-room-reuse inefficiency (CP10) worth fixing now, or acceptable until request volume grows enough to matter?
 10. ~~Checkpoint 12 built the two approval chains explicitly evidenced in `REQUESTER`/`PROCUREMENT` and `FINANCE VALIDATION`. Is that the complete set...~~ **Resolved for Award Decision and Fulfilment** (`CHECKPOINT_12_ADDENDUM.md`, owner-requested cross-check): `PO REGISTER`/`PURCHASE ORDER`'s "Auth"/"Approval Status" columns are read-only reflections of the Chain-A decision, not independent approval inputs; `GRN`'s `INSPECTED BY`/`ACCEPTANCE STATUS` is single-actor, matching the existing `RECEIVER` gate. No further chains needed in those two areas. **Still open**: whether PDF/document release or other stages beyond these need anything.
 11. Now that a workbook-sourced `MANAGING_DIRECTOR` role exists (CP12), should it absorb/replace `PROJECT_DIRECTOR`'s existing `approveSendToFinance` transition (CP3, sourced from the pack's SoD matrix, not the workbook), or are the two deliberately distinct functions?
-12. **New (CP12 addendum)**: the workbook's `VO REGISTER` sheet evidences a complete, real Variation Order transaction type (raise, value against BOQ baseline, single-actor approve) that CORE1X has never modeled in any checkpoint — no schema, page, or action exists for it. Is this in scope for a future checkpoint, or deliberately out of scope for this build?
+12. ~~The workbook's `VO REGISTER` sheet evidences a complete, real Variation Order transaction type... Is this in scope for a future checkpoint...~~ **Built, at a deliberately scoped-down depth** (CP13): a flat register (raise → single-actor MD approve/reject), not the full Change Event lifecycle. See item 13.
+13. **New (CP13)**: is the CP13 flat-register VO slice sufficient, or should a future checkpoint build toward `CHANGE_VARIATIONS_CLAIMS_AND_FINAL_ACCOUNT_STANDARD.md`'s fuller scope (time impact, disputes, propagation of approved VO value into Control Room budget/commitment figures, audit logging for VO decisions)?
 
 ## 8. Status
 
@@ -134,6 +139,6 @@ unaccepted page slice in implementation").
 
 Owner acceptance (to be completed by the owner, not by Claude Code):
 
-- [ ] Reviewed and accepted: Checkpoints 0–12
+- [ ] Reviewed and accepted: Checkpoints 0–13
 - Signed:
 - Date:
