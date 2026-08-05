@@ -22,8 +22,19 @@ const COOKIE_NAME = "c1x_actor_role";
 const DEFAULT_ROLE: Role = "SITE_QS_COMMERCIAL";
 
 export async function getActorRole(): Promise<Role> {
-  const store = await cookies();
-  const value = store.get(COOKIE_NAME)?.value;
+  // next/headers' cookies() throws outside a real request scope (a route
+  // handler, Server Action, or Server Component render). Every real call
+  // site in this app is one of those, so this can never mask a genuine
+  // request's role — the only callers that hit the fallback are
+  // standalone scripts (e.g. scripts/audit-performance.ts) that invoke a
+  // getXData function directly for measurement, not to enforce anything.
+  let value: string | undefined;
+  try {
+    const store = await cookies();
+    value = store.get(COOKIE_NAME)?.value;
+  } catch {
+    value = undefined;
+  }
   return (ROLES as readonly string[]).includes(value ?? "") ? (value as Role) : DEFAULT_ROLE;
 }
 

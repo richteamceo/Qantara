@@ -1,0 +1,12 @@
+{
+  "checkpoint": 10,
+  "pages": ["Performance / N+1 query audit (self-scoped from Phase-1 hardening basket — see CHECKPOINT_10_REPORT.md §1)"],
+  "capturedWith": "Real AsyncLocalStorage-based query counter + Playwright, 2026-08-05",
+  "artifacts": [
+    { "file": "performance-audit-output.txt", "sha256": "f117cd168b4d69a49c2bc2cc4a6c174a66f429e5585afae21b222abefd09f695", "note": "Real measured query counts for all 9 pages against the golden fixture, plus the full literal SQL text of every query issued, for manual N+1 inspection" }
+  ],
+  "screenshots": [
+    { "file": "fv-regression-after-cp10-1440x900.png", "sha256": "f1c30209c90467e6a1da8cc797923580abb50ec2c99d59891a38a2c1cc9351c6", "state": "P06 re-checked after this checkpoint's getActorRole() defensive fix — hash is byte-identical to Checkpoint 7's equivalent regression screenshot, confirming zero behavioral change to real requests" }
+  ],
+  "notesOnMissingStates": "Audit covers server-side query counts only, not client-side bundle size/Core Web Vitals/Lighthouse scores — no browser-performance profiling was run this checkpoint, disclosed as out of scope."
+}

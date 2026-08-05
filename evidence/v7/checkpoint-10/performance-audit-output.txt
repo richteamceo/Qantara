@@ -1,0 +1,95 @@
+Page                         Queries Status
+--------------------------------------------------
+P01 Control Room             5       ok
+P02 Requests Register        4       ok
+P03 Request Dossier          10      ok
+P04 Procurement Package      6       ok
+P05 Award Decision           7       ok
+P06 Finance Validation       12      ok
+P07 Purchase Order           6       ok
+P08 Fulfilment/GRN           7       ok
+P09 Payment Voucher          7       ok
+
+=== Full query lists (for manual N+1 inspection) ===
+
+-- P01 Control Room (5 queries) --
+1. select "id", "organisation_id", "reference", "name", "currency", "reporting_period" from "projects" "projects" where "projects"."reference" = $1 limit $2
+2. select "id", "name", "currency" from "organisations" "organisations" where "organisations"."id" = $1 limit $2
+3. select "id", "project_id", "version", "approved_at", "currency", "status" from "baselines" "baselines" where ("baselines"."project_id" = $1 and "baselines"."status" = $2) limit $3
+4. select "id", "project_id", "code", "name", "current_budget", "currency", "budget_source" from "control_accounts" where "control_accounts"."project_id" = $1
+5. select "requests"."id", "requests"."reference", "requests"."controlled_estimate", "requests"."currency", "requests"."control_account_id", "procurement_packages"."id", "procurement_packages"."estimate", "award_decisions"."id", "award_decisions"."net", "award_decisions"."currency", "finance_validations"."id", "finance_validations"."route", "finance_validations"."gross_order_value", "finance_validations"."currency", "purchase_orders"."id", "purchase_orders"."gross", "purchase_orders"."currency", "fulfilment_entries"."id", "fulfilment_entries"."rejected_qty", "payment_vouchers"."id", "payment_vouchers"."accepted_net", "payment_vouchers"."tax_additions", "payment_vouchers"."net_payable", "payment_vouchers"."status", "payment_vouchers"."currency" from "requests" left join "procurement_packages" on "procurement_packages"."request_id" = "requests"."id" left join "award_decisions" on "award_decisions"."package_id" = "procurement_packages"."id" left join "finance_validations" on "finance_validations"."award_id" = "award_decisions"."id" left join "purchase_orders" on "purchase_orders"."finance_validation_id" = "finance_validations"."id" left join "fulfilment_entries" on "fulfilment_entries"."purchase_order_id" = "purchase_orders"."id" left join "payment_vouchers" on "payment_vouchers"."fulfilment_id" = "fulfilment_entries"."id" where "requests"."project_id" = $1
+
+-- P02 Requests Register (4 queries) --
+1. select "id", "organisation_id", "reference", "name", "currency", "reporting_period" from "projects" "projects" where "projects"."reference" = $1 limit $2
+2. select "id", "project_id", "control_account_id", "reference", "controlled_estimate", "currency", "status", "requested_by", "work_area", "need_by_date", "priority", "created_at", "is_demo_data", "demo_note" from "requests" where "requests"."project_id" = $1
+3. select "id", "request_id", "line_no", "description", "cost_type", "authority_type", "authority_reference", "requested_qty", "requested_unit", "exposure_amount", "exposure_currency", "boq_available_qty", "boq_source_note" from "request_lines"
+4. select "id", "request_id", "reference", "estimate", "invited_suppliers", "status", "sourcing_method" from "procurement_packages"
+
+-- P03 Request Dossier (10 queries) --
+1. select "id", "organisation_id", "reference", "name", "currency", "reporting_period" from "projects" "projects" where "projects"."reference" = $1 limit $2
+2. select "id", "project_id", "control_account_id", "reference", "controlled_estimate", "currency", "status", "requested_by", "work_area", "need_by_date", "priority", "created_at", "is_demo_data", "demo_note" from "requests" "requests" where "requests"."reference" = $1 limit $2
+3. select "id", "project_id", "code", "name", "current_budget", "currency", "budget_source" from "control_accounts" "controlAccounts" where "controlAccounts"."id" = $1 limit $2
+4. select "id", "request_id", "line_no", "description", "cost_type", "authority_type", "authority_reference", "requested_qty", "requested_unit", "exposure_amount", "exposure_currency", "boq_available_qty", "boq_source_note" from "request_lines" where "request_lines"."request_id" = $1
+5. select "id", "request_id", "reference", "estimate", "invited_suppliers", "status", "sourcing_method" from "procurement_packages" "procurementPackages" where "procurementPackages"."request_id" = $1 limit $2
+6. select "id", "organisation_id", "reference", "name", "currency", "reporting_period" from "projects" "projects" where "projects"."reference" = $1 limit $2
+7. select "id", "name", "currency" from "organisations" "organisations" where "organisations"."id" = $1 limit $2
+8. select "id", "project_id", "version", "approved_at", "currency", "status" from "baselines" "baselines" where ("baselines"."project_id" = $1 and "baselines"."status" = $2) limit $3
+9. select "id", "project_id", "code", "name", "current_budget", "currency", "budget_source" from "control_accounts" where "control_accounts"."project_id" = $1
+10. select "requests"."id", "requests"."reference", "requests"."controlled_estimate", "requests"."currency", "requests"."control_account_id", "procurement_packages"."id", "procurement_packages"."estimate", "award_decisions"."id", "award_decisions"."net", "award_decisions"."currency", "finance_validations"."id", "finance_validations"."route", "finance_validations"."gross_order_value", "finance_validations"."currency", "purchase_orders"."id", "purchase_orders"."gross", "purchase_orders"."currency", "fulfilment_entries"."id", "fulfilment_entries"."rejected_qty", "payment_vouchers"."id", "payment_vouchers"."accepted_net", "payment_vouchers"."tax_additions", "payment_vouchers"."net_payable", "payment_vouchers"."status", "payment_vouchers"."currency" from "requests" left join "procurement_packages" on "procurement_packages"."request_id" = "requests"."id" left join "award_decisions" on "award_decisions"."package_id" = "procurement_packages"."id" left join "finance_validations" on "finance_validations"."award_id" = "award_decisions"."id" left join "purchase_orders" on "purchase_orders"."finance_validation_id" = "finance_validations"."id" left join "fulfilment_entries" on "fulfilment_entries"."purchase_order_id" = "purchase_orders"."id" left join "payment_vouchers" on "payment_vouchers"."fulfilment_id" = "fulfilment_entries"."id" where "requests"."project_id" = $1
+
+-- P04 Procurement Package (6 queries) --
+1. select "id", "organisation_id", "reference", "name", "currency", "reporting_period" from "projects" "projects" where "projects"."reference" = $1 limit $2
+2. select "id", "request_id", "reference", "estimate", "invited_suppliers", "status", "sourcing_method" from "procurement_packages" "procurementPackages" where "procurementPackages"."reference" = $1 limit $2
+3. select "id", "project_id", "control_account_id", "reference", "controlled_estimate", "currency", "status", "requested_by", "work_area", "need_by_date", "priority", "created_at", "is_demo_data", "demo_note" from "requests" "requests" where "requests"."id" = $1 limit $2
+4. select "id", "request_id", "line_no", "description", "cost_type", "authority_type", "authority_reference", "requested_qty", "requested_unit", "exposure_amount", "exposure_currency", "boq_available_qty", "boq_source_note" from "request_lines" where "request_lines"."request_id" = $1
+5. select "id", "package_id", "supplier", "net_amount", "currency", "received_at", "valid_until", "is_sole_source", "technically_compliant" from "quotations" where "quotations"."package_id" = $1
+6. select "id", "package_id", "reference", "supplier", "net", "currency", "saving", "status", "competition_result", "deviation_code", "deviation_reason" from "award_decisions" "awardDecisions" where "awardDecisions"."package_id" = $1 limit $2
+
+-- P05 Award Decision (7 queries) --
+1. select "id", "organisation_id", "reference", "name", "currency", "reporting_period" from "projects" "projects" where "projects"."reference" = $1 limit $2
+2. select "id", "package_id", "reference", "supplier", "net", "currency", "saving", "status", "competition_result", "deviation_code", "deviation_reason" from "award_decisions" "awardDecisions" where "awardDecisions"."reference" = $1 limit $2
+3. select "id", "request_id", "reference", "estimate", "invited_suppliers", "status", "sourcing_method" from "procurement_packages" "procurementPackages" where "procurementPackages"."id" = $1 limit $2
+4. select "id", "award_id", "request_line_id", "line_no", "description", "quantity", "unit", "rate", "net_amount", "currency" from "award_lines" where "award_lines"."award_id" = $1
+5. select "id", "award_id", "reference", "route", "gross_order_value", "currency", "vat_amount", "nhil_amount", "getfund_amount", "wht_amount", "net_payable", "status", "validated_at" from "finance_validations" "financeValidations" where "financeValidations"."award_id" = $1 limit $2
+6. select "id", "request_id", "reference", "estimate", "invited_suppliers", "status", "sourcing_method" from "procurement_packages" "procurementPackages" where "procurementPackages"."id" = $1 limit $2
+7. select "id", "project_id", "control_account_id", "reference", "controlled_estimate", "currency", "status", "requested_by", "work_area", "need_by_date", "priority", "created_at", "is_demo_data", "demo_note" from "requests" "requests" where "requests"."id" = $1 limit $2
+
+-- P06 Finance Validation (12 queries) --
+1. select "id", "organisation_id", "reference", "name", "currency", "reporting_period" from "projects" "projects" where "projects"."reference" = $1 limit $2
+2. select "id", "award_id", "reference", "route", "gross_order_value", "currency", "vat_amount", "nhil_amount", "getfund_amount", "wht_amount", "net_payable", "status", "validated_at" from "finance_validations" "financeValidations" where "financeValidations"."reference" = $1 limit $2
+3. select "id", "package_id", "reference", "supplier", "net", "currency", "saving", "status", "competition_result", "deviation_code", "deviation_reason" from "award_decisions" "awardDecisions" where "awardDecisions"."id" = $1 limit $2
+4. select "id", "request_id", "reference", "estimate", "invited_suppliers", "status", "sourcing_method" from "procurement_packages" "procurementPackages" where "procurementPackages"."id" = $1 limit $2
+5. select "id", "project_id", "control_account_id", "reference", "controlled_estimate", "currency", "status", "requested_by", "work_area", "need_by_date", "priority", "created_at", "is_demo_data", "demo_note" from "requests" "requests" where "requests"."id" = $1 limit $2
+6. select "id", "award_id", "request_line_id", "line_no", "description", "quantity", "unit", "rate", "net_amount", "currency" from "award_lines" where "award_lines"."award_id" = $1
+7. select "id", "finance_validation_id", "reference", "net", "gross", "currency", "status", "issued_at" from "purchase_orders" "purchaseOrders" where "purchaseOrders"."finance_validation_id" = $1 limit $2
+8. select "id", "organisation_id", "reference", "name", "currency", "reporting_period" from "projects" "projects" where "projects"."reference" = $1 limit $2
+9. select "id", "name", "currency" from "organisations" "organisations" where "organisations"."id" = $1 limit $2
+10. select "id", "project_id", "version", "approved_at", "currency", "status" from "baselines" "baselines" where ("baselines"."project_id" = $1 and "baselines"."status" = $2) limit $3
+11. select "id", "project_id", "code", "name", "current_budget", "currency", "budget_source" from "control_accounts" where "control_accounts"."project_id" = $1
+12. select "requests"."id", "requests"."reference", "requests"."controlled_estimate", "requests"."currency", "requests"."control_account_id", "procurement_packages"."id", "procurement_packages"."estimate", "award_decisions"."id", "award_decisions"."net", "award_decisions"."currency", "finance_validations"."id", "finance_validations"."route", "finance_validations"."gross_order_value", "finance_validations"."currency", "purchase_orders"."id", "purchase_orders"."gross", "purchase_orders"."currency", "fulfilment_entries"."id", "fulfilment_entries"."rejected_qty", "payment_vouchers"."id", "payment_vouchers"."accepted_net", "payment_vouchers"."tax_additions", "payment_vouchers"."net_payable", "payment_vouchers"."status", "payment_vouchers"."currency" from "requests" left join "procurement_packages" on "procurement_packages"."request_id" = "requests"."id" left join "award_decisions" on "award_decisions"."package_id" = "procurement_packages"."id" left join "finance_validations" on "finance_validations"."award_id" = "award_decisions"."id" left join "purchase_orders" on "purchase_orders"."finance_validation_id" = "finance_validations"."id" left join "fulfilment_entries" on "fulfilment_entries"."purchase_order_id" = "purchase_orders"."id" left join "payment_vouchers" on "payment_vouchers"."fulfilment_id" = "fulfilment_entries"."id" where "requests"."project_id" = $1
+
+-- P07 Purchase Order (6 queries) --
+1. select "id", "organisation_id", "reference", "name", "currency", "reporting_period" from "projects" "projects" where "projects"."reference" = $1 limit $2
+2. select "id", "finance_validation_id", "reference", "net", "gross", "currency", "status", "issued_at" from "purchase_orders" "purchaseOrders" where "purchaseOrders"."reference" = $1 limit $2
+3. select "id", "award_id", "reference", "route", "gross_order_value", "currency", "vat_amount", "nhil_amount", "getfund_amount", "wht_amount", "net_payable", "status", "validated_at" from "finance_validations" "financeValidations" where "financeValidations"."id" = $1 limit $2
+4. select "id", "package_id", "reference", "supplier", "net", "currency", "saving", "status", "competition_result", "deviation_code", "deviation_reason" from "award_decisions" "awardDecisions" where "awardDecisions"."id" = $1 limit $2
+5. select "id", "purchase_order_id", "award_line_id", "line_no", "description", "quantity", "unit", "rate", "net", "tax_amount", "gross", "currency" from "purchase_order_lines" where "purchase_order_lines"."purchase_order_id" = $1
+6. select "id", "purchase_order_id", "purchase_order_line_id", "reference", "status", "delivered_qty", "accepted_qty", "rejected_qty", "outstanding_qty", "unit" from "fulfilment_entries"
+
+-- P08 Fulfilment/GRN (7 queries) --
+1. select "id", "organisation_id", "reference", "name", "currency", "reporting_period" from "projects" "projects" where "projects"."reference" = $1 limit $2
+2. select "id", "purchase_order_id", "purchase_order_line_id", "reference", "status", "delivered_qty", "accepted_qty", "rejected_qty", "outstanding_qty", "unit" from "fulfilment_entries" "fulfilmentEntries" where "fulfilmentEntries"."reference" = $1 limit $2
+3. select "id", "purchase_order_id", "award_line_id", "line_no", "description", "quantity", "unit", "rate", "net", "tax_amount", "gross", "currency" from "purchase_order_lines" "purchaseOrderLines" where "purchaseOrderLines"."id" = $1 limit $2
+4. select "id", "finance_validation_id", "reference", "net", "gross", "currency", "status", "issued_at" from "purchase_orders" "purchaseOrders" where "purchaseOrders"."id" = $1 limit $2
+5. select "id", "award_id", "reference", "route", "gross_order_value", "currency", "vat_amount", "nhil_amount", "getfund_amount", "wht_amount", "net_payable", "status", "validated_at" from "finance_validations" "financeValidations" where "financeValidations"."id" = $1 limit $2
+6. select "id", "package_id", "reference", "supplier", "net", "currency", "saving", "status", "competition_result", "deviation_code", "deviation_reason" from "award_decisions" "awardDecisions" where "awardDecisions"."id" = $1 limit $2
+7. select "id", "fulfilment_id", "reference", "accepted_net", "tax_additions", "wht", "net_payable", "currency", "status", "paid_at" from "payment_vouchers" "paymentVouchers" where "paymentVouchers"."fulfilment_id" = $1 limit $2
+
+-- P09 Payment Voucher (7 queries) --
+1. select "id", "organisation_id", "reference", "name", "currency", "reporting_period" from "projects" "projects" where "projects"."reference" = $1 limit $2
+2. select "id", "fulfilment_id", "reference", "accepted_net", "tax_additions", "wht", "net_payable", "currency", "status", "paid_at" from "payment_vouchers" "paymentVouchers" where "paymentVouchers"."reference" = $1 limit $2
+3. select "id", "purchase_order_id", "purchase_order_line_id", "reference", "status", "delivered_qty", "accepted_qty", "rejected_qty", "outstanding_qty", "unit" from "fulfilment_entries" "fulfilmentEntries" where "fulfilmentEntries"."id" = $1 limit $2
+4. select "id", "purchase_order_id", "award_line_id", "line_no", "description", "quantity", "unit", "rate", "net", "tax_amount", "gross", "currency" from "purchase_order_lines" "purchaseOrderLines" where "purchaseOrderLines"."id" = $1 limit $2
+5. select "id", "finance_validation_id", "reference", "net", "gross", "currency", "status", "issued_at" from "purchase_orders" "purchaseOrders" where "purchaseOrders"."id" = $1 limit $2
+6. select "id", "award_id", "reference", "route", "gross_order_value", "currency", "vat_amount", "nhil_amount", "getfund_amount", "wht_amount", "net_payable", "status", "validated_at" from "finance_validations" "financeValidations" where "financeValidations"."id" = $1 limit $2
+7. select "id", "package_id", "reference", "supplier", "net", "currency", "saving", "status", "competition_result", "deviation_code", "deviation_reason" from "award_decisions" "awardDecisions" where "awardDecisions"."id" = $1 limit $2
