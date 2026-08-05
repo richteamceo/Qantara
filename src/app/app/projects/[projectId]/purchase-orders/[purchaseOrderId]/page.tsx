@@ -30,11 +30,11 @@ export default async function PurchaseOrderPage({
         </nav>
         <div className="mt-1 text-[11px] text-c1x-muted-2">
           Source:{" "}
-          <a href={`/app/projects/${data.project.reference}/finance-validations/${data.financeValidation.reference}`} className="text-c1x-blue">
+          <a href={`/app/projects/${data.project.reference}/finance-validations/${data.financeValidation.reference}`} className="text-c1x-blue underline underline-offset-2">
             {data.financeValidation.reference}
           </a>{" "}
           ·{" "}
-          <a href={`/app/projects/${data.project.reference}/awards/${data.award.reference}`} className="text-c1x-blue">
+          <a href={`/app/projects/${data.project.reference}/awards/${data.award.reference}`} className="text-c1x-blue underline underline-offset-2">
             {data.award.reference}
           </a>
         </div>
@@ -190,7 +190,7 @@ export default async function PurchaseOrderPage({
                   <td className="c1x-tabular px-3 py-2 font-medium">{formatMoney(l.gross, l.currency)}</td>
                   <td className="px-3 py-2">
                     {l.fulfilmentReference ? (
-                      <a href={`/app/projects/${data.project.reference}/fulfilment/${l.fulfilmentReference}`} className="text-c1x-blue">
+                      <a href={`/app/projects/${data.project.reference}/fulfilment/${l.fulfilmentReference}`} className="text-c1x-blue underline underline-offset-2">
                         {l.fulfilmentReference} ({l.fulfilmentStatus})
                       </a>
                     ) : (
@@ -220,7 +220,7 @@ export default async function PurchaseOrderPage({
                   Line {l.lineNo} — {l.description}
                 </span>
                 {l.fulfilmentReference ? (
-                  <a href={`/app/projects/${data.project.reference}/fulfilment/${l.fulfilmentReference}`} className="text-c1x-blue">
+                  <a href={`/app/projects/${data.project.reference}/fulfilment/${l.fulfilmentReference}`} className="text-c1x-blue underline underline-offset-2">
                     {l.fulfilmentReference}
                   </a>
                 ) : (

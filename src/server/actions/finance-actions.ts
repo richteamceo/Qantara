@@ -4,19 +4,24 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { financeValidations, awardDecisions, awardLines, purchaseOrders, purchaseOrderLines } from "@/db/schema";
+import { getActorRole, requireRole, type Role } from "@/lib/auth";
 
 export type ValidateLockResult =
   | { status: "locked"; route: string; purchaseOrderReference: string | null }
   | { status: "already_locked"; route: string }
   | { status: "ineligible"; reason: string }
-  | { status: "not_found" };
+  | { status: "not_found" }
+  | { status: "forbidden"; requiredRole: Role; actorRole: Role };
 
 const ELIGIBLE_ALWAYS = new Set(["CREDIT", "CASH", "ADVANCE", "REVIEW"]);
 
 /**
  * PAGE_06 primary transition — "Validate & Lock Route". Implements: server-
- * side route re-validation (step 1/3, minus the permission part — no auth
- * model yet), persists the route decision (step 4), and — for CREDIT only
+ * side route re-validation (step 1/3 — permission revalidation is now real,
+ * Checkpoint 7, requires FINANCE per the SoD matrix's explicit rule
+ * "Finance route lock requires Finance permission and cannot be granted by
+ * Procurement UI state"), persists the route decision (step 4), and — for
+ * CREDIT only
  * — produces the route-specific next object idempotently (step 5): a real
  * PurchaseOrder, matching PAGE_06 acceptance test #9 exactly. Other routes
  * lock the decision but do not yet produce their own next object (CASH/
@@ -31,6 +36,10 @@ export async function validateAndLockRoute(
   fvReference: string,
   chosenRoute: "CREDIT" | "CASH" | "ADVANCE" | "URGENT" | "DIRECT" | "REVIEW"
 ): Promise<ValidateLockResult> {
+  const actorRole = await getActorRole();
+  const permission = requireRole(actorRole, "FINANCE");
+  if (!permission.ok) return { status: "forbidden", requiredRole: permission.requiredRole, actorRole: permission.actorRole };
+
   const fv = await db.query.financeValidations.findFirst({ where: eq(financeValidations.reference, fvReference) });
   if (!fv) return { status: "not_found" };
 

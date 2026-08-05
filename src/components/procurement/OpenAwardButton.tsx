@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { openAwardDecision, type OpenAwardResult } from "@/server/actions/procurement-actions";
+import { ForbiddenNotice } from "@/components/shell/ForbiddenNotice";
 
 async function runAction(
   projectReference: string,
@@ -39,11 +40,12 @@ export function OpenAwardButton({
         </button>
       </form>
       {result && (
-        <div className={`max-w-xs text-right text-[11px] ${result.status === "created" ? "text-c1x-green" : result.status === "blocked" ? "text-c1x-red" : "text-c1x-muted"}`}>
+        <div className={`max-w-xs text-right text-[11px] ${result.status === "created" ? "text-c1x-green" : result.status === "blocked" || result.status === "forbidden" ? "text-c1x-red" : "text-c1x-muted"}`}>
           {result.status === "created" && `Created ${result.awardReference}.`}
           {result.status === "already_exists" && `Already has ${result.awardReference} (no duplicate created).`}
           {result.status === "blocked" && `Blocked: ${result.reason}`}
           {result.status === "not_found" && "Package not found."}
+          {result.status === "forbidden" && <ForbiddenNotice requiredRole={result.requiredRole} actorRole={result.actorRole} />}
         </div>
       )}
     </div>

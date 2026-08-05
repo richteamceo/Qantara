@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { approveAndReleasePayment, type ApproveAndPayResult } from "@/server/actions/payment-voucher-actions";
+import { ForbiddenNotice } from "@/components/shell/ForbiddenNotice";
 
 export function ApproveAndPayButton({
   projectReference,
@@ -33,6 +34,7 @@ export function ApproveAndPayButton({
           {result.status === "paid" && `Paid ${result.netPayable.toLocaleString()} ${result.currency}.`}
           {result.status === "already_paid" && "Already paid — immutable, no reversal flow yet."}
           {result.status === "not_found" && "Not found."}
+          {result.status === "forbidden" && <ForbiddenNotice requiredRole={result.requiredRole} actorRole={result.actorRole} />}
         </div>
       )}
     </div>

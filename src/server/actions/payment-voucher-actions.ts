@@ -4,12 +4,14 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { fulfilmentEntries, purchaseOrderLines, paymentVouchers } from "@/db/schema";
+import { getActorRole, requireRole, type Role } from "@/lib/auth";
 
 export type OpenPaymentVoucherResult =
   | { status: "opened"; voucherReference: string }
   | { status: "already_open"; voucherReference: string }
   | { status: "not_posted" }
-  | { status: "not_found" };
+  | { status: "not_found" }
+  | { status: "forbidden"; requiredRole: Role; actorRole: Role };
 
 /**
  * Bridge from PAGE_08 to PAGE_09 — not a header action in either page
@@ -32,6 +34,10 @@ export async function openPaymentVoucher(
   projectReference: string,
   fulfilmentReference: string
 ): Promise<OpenPaymentVoucherResult> {
+  const actorRole = await getActorRole();
+  const permission = requireRole(actorRole, "SITE_QS_COMMERCIAL");
+  if (!permission.ok) return { status: "forbidden", requiredRole: permission.requiredRole, actorRole: permission.actorRole };
+
   const fulfilment = await db.query.fulfilmentEntries.findFirst({ where: eq(fulfilmentEntries.reference, fulfilmentReference) });
   if (!fulfilment) return { status: "not_found" };
   if (fulfilment.status !== "POSTED") return { status: "not_posted" };
@@ -73,7 +79,8 @@ export async function openPaymentVoucher(
 export type ApproveAndPayResult =
   | { status: "paid"; netPayable: number; currency: string }
   | { status: "already_paid" }
-  | { status: "not_found" };
+  | { status: "not_found" }
+  | { status: "forbidden"; requiredRole: Role; actorRole: Role };
 
 /**
  * PAGE_09 header action — "Approve Voucher & Release Payment" is a single
@@ -85,11 +92,20 @@ export type ApproveAndPayResult =
  * every prior checkpoint's primary action. Immutable once PAID — calling
  * again returns already_paid rather than double-paying (acceptance test
  * #4: "Payment cannot exceed current approved payable or execute twice").
+ * Permission revalidation is now real (Checkpoint 7) — requires FINANCE,
+ * matching the SoD matrix's explicit rules ("receiver cannot alone certify
+ * payment value"; "payment preparation, approval and execution are
+ * separable functions") — a different role than openPaymentVoucher's
+ * SITE_QS_COMMERCIAL certification step.
  */
 export async function approveAndReleasePayment(
   projectReference: string,
   voucherReference: string
 ): Promise<ApproveAndPayResult> {
+  const actorRole = await getActorRole();
+  const permission = requireRole(actorRole, "FINANCE");
+  if (!permission.ok) return { status: "forbidden", requiredRole: permission.requiredRole, actorRole: permission.actorRole };
+
   const voucher = await db.query.paymentVouchers.findFirst({ where: eq(paymentVouchers.reference, voucherReference) });
   if (!voucher) return { status: "not_found" };
   if (voucher.status === "PAID") return { status: "already_paid" };

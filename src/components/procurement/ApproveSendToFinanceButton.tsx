@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { approveSendToFinance, type ApproveSendToFinanceResult } from "@/server/actions/procurement-actions";
+import { ForbiddenNotice } from "@/components/shell/ForbiddenNotice";
 
 async function runAction(
   projectReference: string,
@@ -39,10 +40,11 @@ export function ApproveSendToFinanceButton({
         </button>
       </form>
       {result && (
-        <div className={`max-w-xs text-right text-[11px] ${result.status === "created" ? "text-c1x-green" : "text-c1x-muted"}`}>
+        <div className={`max-w-xs text-right text-[11px] ${result.status === "created" ? "text-c1x-green" : result.status === "forbidden" ? "text-c1x-red" : "text-c1x-muted"}`}>
           {result.status === "created" && `Created ${result.financeReference} (route pending Page 06 lock).`}
           {result.status === "already_exists" && `Already sent — ${result.financeReference} (no duplicate created).`}
           {result.status === "not_found" && "Award not found."}
+          {result.status === "forbidden" && <ForbiddenNotice requiredRole={result.requiredRole} actorRole={result.actorRole} />}
         </div>
       )}
     </div>

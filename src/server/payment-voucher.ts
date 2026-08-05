@@ -9,6 +9,7 @@ import {
   financeValidations,
   awardDecisions,
 } from "@/db/schema";
+import { getActorRole, ROLE_LABELS } from "@/lib/auth";
 
 export type ReadinessCheck = { key: string; label: string; status: "pass" | "fail"; detail: string };
 
@@ -62,6 +63,7 @@ export async function getPaymentVoucherData(
   projectReference: string,
   voucherReference: string
 ): Promise<PaymentVoucherData | null> {
+  const actorRole = await getActorRole();
   const project = await db.query.projects.findFirst({ where: eq(projects.reference, projectReference) });
   if (!project) return null;
 
@@ -109,8 +111,11 @@ export async function getPaymentVoucherData(
     {
       key: "authority-sod",
       label: "Authority / SoD",
-      status: "fail",
-      detail: "No auth model yet — approval and payment-release are not actually separated (deferred)",
+      status: actorRole === "FINANCE" ? "pass" : "fail",
+      detail:
+        actorRole === "FINANCE"
+          ? "Current actor (Finance Reviewer) holds the FINANCE role required to release payment — server-enforced (Checkpoint 7), separable from the SITE_QS_COMMERCIAL role that certifies and opens the voucher"
+          : `Current actor (${ROLE_LABELS[actorRole]}) lacks the Finance role required to release payment — Approve Voucher & Release Payment is server-blocked, not just hidden`,
     },
     {
       key: "supplier-bank-verification",

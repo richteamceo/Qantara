@@ -10,6 +10,7 @@ import {
   purchaseOrders,
 } from "@/db/schema";
 import { getControlRoomData, type MetricValue } from "./control-room";
+import { getActorRole, ROLE_LABELS } from "@/lib/auth";
 
 export type RouteOption = {
   route: "CREDIT" | "CASH" | "ADVANCE" | "URGENT" | "DIRECT" | "REVIEW";
@@ -60,6 +61,7 @@ export async function getFinanceValidationData(
   projectReference: string,
   fvReference: string
 ): Promise<FinanceValidationData | null> {
+  const actorRole = await getActorRole();
   const project = await db.query.projects.findFirst({ where: eq(projects.reference, projectReference) });
   if (!project) return null;
 
@@ -130,7 +132,15 @@ export async function getFinanceValidationData(
       status: Math.abs(Number(fv.vatAmount) + Number(fv.nhilAmount) + Number(fv.getfundAmount) + awardNet - gross) < 0.02 ? "pass" : "fail",
       detail: "VAT 15% + NHIL 2.5% + GETFund 2.5% + net reconciles to gross",
     },
-    { key: "sod-authority", label: "SoD / authority", status: "fail", detail: "No auth model yet — Finance-only permission is not actually enforced (deferred)" },
+    {
+      key: "sod-authority",
+      label: "SoD / authority",
+      status: actorRole === "FINANCE" ? "pass" : "fail",
+      detail:
+        actorRole === "FINANCE"
+          ? "Current actor (Finance Reviewer) holds the FINANCE role required to lock this route — server-enforced (Checkpoint 7)"
+          : `Current actor (${ROLE_LABELS[actorRole]}) lacks the Finance role required to lock this route — Validate & Lock is server-blocked, not just hidden`,
+    },
     { key: "route-sequencing", label: "Route sequencing", status: routeOptions.find((r) => r.route === fv.route)?.eligible ? "pass" : "fail", detail: `Current route ${fv.route} eligibility checked against real rules above` },
     { key: "evidence-completeness", label: "Evidence completeness", status: "fail", detail: "Evidence register / audit engine not implemented yet (deferred)" },
   ];

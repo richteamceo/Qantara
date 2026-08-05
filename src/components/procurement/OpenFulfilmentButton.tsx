@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { openFulfilment } from "@/server/actions/purchase-order-actions";
+import { openFulfilment, type OpenFulfilmentResult } from "@/server/actions/purchase-order-actions";
+import { ForbiddenNotice } from "@/components/shell/ForbiddenNotice";
 
 export function OpenFulfilmentButton({
   projectReference,
@@ -13,7 +14,7 @@ export function OpenFulfilmentButton({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<OpenFulfilmentResult | null>(null);
 
   return (
     <div className="flex flex-col items-end gap-1">
@@ -22,13 +23,11 @@ export function OpenFulfilmentButton({
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
-            const result = await openFulfilment(projectReference, poReference);
-            if (result.status === "opened") {
-              router.push(`/app/projects/${projectReference}/fulfilment/${result.fulfilmentReference}`);
-            } else if (result.status === "no_lines_available") {
-              setError("Every line already has a fulfilment record.");
+            const r = await openFulfilment(projectReference, poReference);
+            if (r.status === "opened") {
+              router.push(`/app/projects/${projectReference}/fulfilment/${r.fulfilmentReference}`);
             } else {
-              setError("Purchase order not found.");
+              setResult(r);
             }
           })
         }
@@ -36,7 +35,15 @@ export function OpenFulfilmentButton({
       >
         {isPending ? "Opening…" : "Issue PO & Open Fulfilment"}
       </button>
-      {error && <div className="text-[11px] text-c1x-amber">{error}</div>}
+      {result && result.status === "no_lines_available" && (
+        <div className="text-[11px] text-c1x-amber">Every line already has a fulfilment record.</div>
+      )}
+      {result && result.status === "not_found" && <div className="text-[11px] text-c1x-amber">Purchase order not found.</div>}
+      {result && result.status === "forbidden" && (
+        <div className="text-[11px] text-c1x-red">
+          <ForbiddenNotice requiredRole={result.requiredRole} actorRole={result.actorRole} />
+        </div>
+      )}
     </div>
   );
 }

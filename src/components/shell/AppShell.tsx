@@ -1,6 +1,7 @@
 import { ProductRail } from "./ProductRail";
 import { DomainPanel } from "./DomainPanel";
 import { TopBar } from "./TopBar";
+import type { Role } from "@/lib/auth";
 
 export function AppShell({
   projectId,
@@ -9,6 +10,7 @@ export function AppShell({
   currency,
   baselineVersion,
   reportingPeriod,
+  actorRole,
   children,
 }: {
   projectId: string;
@@ -17,12 +19,13 @@ export function AppShell({
   currency: string;
   baselineVersion: string;
   reportingPeriod: string;
+  actorRole: Role;
   children: React.ReactNode;
 }) {
   return (
     <div className="min-h-screen bg-c1x-canvas">
       <ProductRail active="projects" />
-      <TopBar organisationName={organisationName} reportingPeriod={reportingPeriod} />
+      <TopBar organisationName={organisationName} reportingPeriod={reportingPeriod} actorRole={actorRole} />
       <DomainPanel
         projectId={projectId}
         projectName={projectName}

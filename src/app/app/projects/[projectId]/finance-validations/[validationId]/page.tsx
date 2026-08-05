@@ -32,11 +32,11 @@ export default async function FinanceValidationPage({
         </nav>
         <div className="mt-1 text-[11px] text-c1x-muted-2">
           Source:{" "}
-          <a href={`/app/projects/${data.project.reference}/awards/${data.award.reference}`} className="text-c1x-blue">
+          <a href={`/app/projects/${data.project.reference}/awards/${data.award.reference}`} className="text-c1x-blue underline underline-offset-2">
             {data.award.reference}
           </a>{" "}
           ·{" "}
-          <a href={`/app/projects/${data.project.reference}/procurement-packages/${data.packageReference}`} className="text-c1x-blue">
+          <a href={`/app/projects/${data.project.reference}/procurement-packages/${data.packageReference}`} className="text-c1x-blue underline underline-offset-2">
             {data.packageReference}
           </a>
         </div>

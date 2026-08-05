@@ -4,11 +4,13 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { purchaseOrders, purchaseOrderLines, fulfilmentEntries } from "@/db/schema";
+import { getActorRole, requireRole, type Role } from "@/lib/auth";
 
 export type OpenFulfilmentResult =
   | { status: "opened"; fulfilmentReference: string }
   | { status: "no_lines_available" }
-  | { status: "not_found" };
+  | { status: "not_found" }
+  | { status: "forbidden"; requiredRole: Role; actorRole: Role };
 
 /**
  * PAGE_07 primary transition — "Issue PO & Open Fulfilment". The PO is
@@ -21,9 +23,15 @@ export type OpenFulfilmentResult =
  * transition, not here — matching the contract's separation between
  * "opening availability" (this page) and "recording what was delivered"
  * (Page 08). Idempotent per line: a line that already has a fulfilment
- * record is skipped, not duplicated.
+ * record is skipped, not duplicated. Permission revalidation is now real
+ * (Checkpoint 7) — requires PROCUREMENT, matching the SoD matrix's "Issue
+ * PO" row (prepare/release control).
  */
 export async function openFulfilment(projectReference: string, poReference: string): Promise<OpenFulfilmentResult> {
+  const actorRole = await getActorRole();
+  const permission = requireRole(actorRole, "PROCUREMENT");
+  if (!permission.ok) return { status: "forbidden", requiredRole: permission.requiredRole, actorRole: permission.actorRole };
+
   const po = await db.query.purchaseOrders.findFirst({ where: eq(purchaseOrders.reference, poReference) });
   if (!po) return { status: "not_found" };
 

@@ -5,19 +5,23 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { requests, requestLines, procurementPackages } from "@/db/schema";
+import { getActorRole, requireRole, type Role } from "@/lib/auth";
 
 export type ApprovePrepareResult =
   | { status: "created"; packageReference: string }
   | { status: "already_allocated"; packageReference: string }
   | { status: "blocked"; reason: string; blockedLines: string[] }
-  | { status: "not_found" };
+  | { status: "not_found" }
+  | { status: "forbidden"; requiredRole: Role; actorRole: Role };
 
 /**
  * PAGE_03 primary transition — "Approve & Prepare Package". Implements
  * contract steps 2 (verify BOQ/exception authority for every active line),
  * 5 (create package allocation), 6 (preserve request identity), 9
- * (idempotent — no duplicate package on retry). NOT implemented here:
- * step 1 (permission/version revalidation — no auth model yet), step 3
+ * (idempotent — no duplicate package on retry). Step 1 (permission
+ * revalidation) is now real (Checkpoint 7) — requires SITE_QS_COMMERCIAL,
+ * matching the SoD matrix's "creator cannot self-approve" rule (the
+ * Requester/Site Engineer role cannot run this). NOT implemented: step 3
  * (budget/evidence checks beyond authority), step 4/7 (audit event —
  * no audit log table yet), step 8 (Full Lineage). Those are disclosed
  * gaps, not silently skipped — see CHECKPOINT_2_REPORT.md.
@@ -26,6 +30,10 @@ export async function approvePrepareRequestPackage(
   projectReference: string,
   requestReference: string
 ): Promise<ApprovePrepareResult> {
+  const actorRole = await getActorRole();
+  const permission = requireRole(actorRole, "SITE_QS_COMMERCIAL");
+  if (!permission.ok) return { status: "forbidden", requiredRole: permission.requiredRole, actorRole: permission.actorRole };
+
   const request = await db.query.requests.findFirst({
     where: eq(requests.reference, requestReference),
   });

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { approvePrepareRequestPackage, type ApprovePrepareResult } from "@/server/actions/request-actions";
+import { ForbiddenNotice } from "@/components/shell/ForbiddenNotice";
 
 async function runAction(
   projectReference: string,
@@ -43,7 +44,7 @@ export function ApprovePrepareButton({
           className={`max-w-xs text-right text-[11px] ${
             result.status === "created"
               ? "text-c1x-green"
-              : result.status === "blocked"
+              : result.status === "blocked" || result.status === "forbidden"
                 ? "text-c1x-red"
                 : "text-c1x-muted"
           }`}
@@ -61,6 +62,7 @@ export function ApprovePrepareButton({
             </>
           )}
           {result.status === "not_found" && "Request not found."}
+          {result.status === "forbidden" && <ForbiddenNotice requiredRole={result.requiredRole} actorRole={result.actorRole} />}
         </div>
       )}
     </div>

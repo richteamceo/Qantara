@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { validateAndLockRoute, type ValidateLockResult } from "@/server/actions/finance-actions";
 import type { RouteOption } from "@/server/finance-validation";
+import { ForbiddenNotice } from "@/components/shell/ForbiddenNotice";
 
 export function RouteSelector({
   projectReference,
@@ -80,6 +81,7 @@ export function RouteSelector({
           {result.status === "already_locked" && `Already locked as ${result.route}.`}
           {result.status === "ineligible" && result.reason}
           {result.status === "not_found" && "Not found."}
+          {result.status === "forbidden" && <ForbiddenNotice requiredRole={result.requiredRole} actorRole={result.actorRole} />}
         </div>
       )}
     </div>

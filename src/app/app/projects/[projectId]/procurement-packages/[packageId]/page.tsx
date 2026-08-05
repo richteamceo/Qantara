@@ -57,7 +57,7 @@ export default async function ProcurementPackagePage({
               <div>
                 <dt className="inline font-medium text-c1x-muted">Source request </dt>
                 <dd className="inline">
-                  <a href={`/app/projects/${data.project.reference}/requests/${data.sourceRequest.reference}`} className="text-c1x-blue">
+                  <a href={`/app/projects/${data.project.reference}/requests/${data.sourceRequest.reference}`} className="text-c1x-blue underline underline-offset-2">
                     {data.sourceRequest.reference}
                   </a>
                 </dd>
@@ -210,7 +210,7 @@ export default async function ProcurementPackagePage({
 
       {activeTab === "Source Requests" && (
         <div className="rounded-[var(--c1x-radius-surface)] border border-c1x-line bg-c1x-surface p-4 text-sm">
-          <a href={`/app/projects/${data.project.reference}/requests/${data.sourceRequest.reference}`} className="text-c1x-blue">
+          <a href={`/app/projects/${data.project.reference}/requests/${data.sourceRequest.reference}`} className="text-c1x-blue underline underline-offset-2">
             {data.sourceRequest.reference}
           </a>
           <span className="ml-2 text-c1x-muted-2">

@@ -1,10 +1,15 @@
+import { RoleSwitcher } from "./RoleSwitcher";
+import type { Role } from "@/lib/auth";
+
 /** Top command bar — APPLICATION_SHELL_AND_NAVIGATION_CONTRACT.md §3. */
 export function TopBar({
   organisationName,
   reportingPeriod,
+  actorRole,
 }: {
   organisationName: string;
   reportingPeriod: string;
+  actorRole: Role;
 }) {
   return (
     <header
@@ -41,15 +46,7 @@ export function TopBar({
         >
           Notifications
         </button>
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-c1x-blue-soft text-[11px] font-semibold text-c1x-blue">
-            RC
-          </div>
-          <div className="text-xs leading-tight">
-            <div className="font-medium text-c1x-ink">Rich C.</div>
-            <div className="text-c1x-muted-2">Commercial Manager (fixed — Checkpoint 1)</div>
-          </div>
-        </div>
+        <RoleSwitcher actorRole={actorRole} />
       </div>
     </header>
   );

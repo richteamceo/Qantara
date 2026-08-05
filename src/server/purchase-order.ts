@@ -9,6 +9,7 @@ import {
   fulfilmentEntries,
 } from "@/db/schema";
 import type { MetricValue } from "./control-room";
+import { getActorRole, ROLE_LABELS } from "@/lib/auth";
 
 export type PoLineRow = {
   id: string;
@@ -47,6 +48,7 @@ export type PurchaseOrderData = {
 };
 
 export async function getPurchaseOrderData(projectReference: string, poReference: string): Promise<PurchaseOrderData | null> {
+  const actorRole = await getActorRole();
   const project = await db.query.projects.findFirst({ where: eq(projects.reference, projectReference) });
   if (!project) return null;
 
@@ -113,7 +115,15 @@ export async function getPurchaseOrderData(projectReference: string, poReference
     { key: "duplicate-po", label: "Duplicate PO / numbering control", status: "pass", detail: "Reference is unique (database constraint)" },
     { key: "reporting-period", label: "Reporting period open", status: "pass", detail: `Issued within reporting period ${project.reportingPeriod}` },
     { key: "terms-evidence", label: "Required terms/evidence complete", status: "fail", detail: "Payment/delivery/warranty terms and evidence capture not modelled yet (deferred)" },
-    { key: "sod", label: "Segregation of duties", status: "fail", detail: "No auth model yet — preparation/approval/issue are not actually separated (deferred)" },
+    {
+      key: "sod",
+      label: "Segregation of duties",
+      status: actorRole === "PROCUREMENT" ? "pass" : "fail",
+      detail:
+        actorRole === "PROCUREMENT"
+          ? "Current actor (Procurement Officer) holds the PROCUREMENT role required to issue fulfilment availability — server-enforced (Checkpoint 7)"
+          : `Current actor (${ROLE_LABELS[actorRole]}) lacks the Procurement role required for Issue PO & Open Fulfilment — preparation/approval/issue are still not fully separated across distinct actions (deferred), but issuance itself is now gated`,
+    },
   ];
   const readinessScore = Math.round((readiness.filter((c) => c.status === "pass").length / readiness.length) * 100);
 

@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { projects, organisations, baselines } from "@/db/schema";
 import { AppShell } from "@/components/shell/AppShell";
+import { getActorRole } from "@/lib/auth";
 
 export default async function ProjectLayout({
   params,
@@ -24,6 +25,7 @@ export default async function ProjectLayout({
   const baseline = await db.query.baselines.findFirst({
     where: eq(baselines.projectId, project.id),
   });
+  const actorRole = await getActorRole();
 
   return (
     <AppShell
@@ -33,6 +35,7 @@ export default async function ProjectLayout({
       currency={project.currency}
       baselineVersion={baseline?.version ?? "—"}
       reportingPeriod={project.reportingPeriod}
+      actorRole={actorRole}
     >
       {children}
     </AppShell>

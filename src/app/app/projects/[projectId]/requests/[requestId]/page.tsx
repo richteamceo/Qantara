@@ -175,7 +175,7 @@ export default async function RequestDossierPage({
                 <dt className="text-xs font-medium text-c1x-muted">Package</dt>
                 <dd className="text-c1x-ink">
                   {data.packageReference ? (
-                    <a href={`/app/projects/${data.project.reference}/procurement-packages/${data.packageReference}`} className="text-c1x-blue">
+                    <a href={`/app/projects/${data.project.reference}/procurement-packages/${data.packageReference}`} className="text-c1x-blue underline underline-offset-2">
                       {data.packageReference}
                     </a>
                   ) : (

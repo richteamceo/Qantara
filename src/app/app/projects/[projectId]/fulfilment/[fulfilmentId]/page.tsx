@@ -22,7 +22,7 @@ export default async function FulfilmentPage({
         </nav>
         <div className="mt-1 text-[11px] text-c1x-muted-2">
           Order:{" "}
-          <a href={`/app/projects/${data.project.reference}/purchase-orders/${data.purchaseOrderReference}`} className="text-c1x-blue">
+          <a href={`/app/projects/${data.project.reference}/purchase-orders/${data.purchaseOrderReference}`} className="text-c1x-blue underline underline-offset-2">
             {data.purchaseOrderReference}
           </a>{" "}
           · Supplier {data.supplier}

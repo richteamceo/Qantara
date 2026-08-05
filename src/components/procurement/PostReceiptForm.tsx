@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { postAcceptedReceipt, type PostReceiptResult } from "@/server/actions/fulfilment-actions";
+import { ForbiddenNotice } from "@/components/shell/ForbiddenNotice";
 
 export function PostReceiptForm({
   projectReference,
@@ -66,6 +67,7 @@ export function PostReceiptForm({
           {result.status === "already_posted" && "Already posted — immutable, use a reversal (not implemented) to correct."}
           {result.status === "invalid" && result.reason}
           {result.status === "not_found" && "Not found."}
+          {result.status === "forbidden" && <ForbiddenNotice requiredRole={result.requiredRole} actorRole={result.actorRole} />}
         </div>
       )}
     </div>

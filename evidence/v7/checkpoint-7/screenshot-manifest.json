@@ -1,0 +1,35 @@
+{
+  "checkpoint": 7,
+  "pages": ["Phase-1 hardening: RBAC/SoD, accessibility, full regression across P01-P09"],
+  "capturedWith": "Playwright (chromium) + axe-core, 2026-08-05",
+  "screenshots": [
+    { "file": "regression/reg-01-control-room-1440x900.png", "sha256": "19ae0fd261fe2099ffa453f37e72a0ad5d2a02fac9a3664976c045a1ef1e4b0d", "state": "P01 fresh-reseed baseline, no regressions vs Checkpoint 6" },
+    { "file": "regression/reg-02-requests-register-1440x900.png", "sha256": "ee4f29c84677092fbcf2c35bdda28fa671256e5c18b83ec46d9efad8253e07ba", "state": "P02 re-checked" },
+    { "file": "regression/reg-03-request-dossier-golden-1440x900.png", "sha256": "f6a340de50f52b3d83bd8acb9745376d18c1bdd39a8bf3311390ec54db764484", "state": "P03 golden MR-SWTBK-2026-0035 re-checked" },
+    { "file": "regression/reg-04-procurement-package-golden-1440x900.png", "sha256": "cf6204f57d98cd75b840f44882ec4647fcfb587a7e91c8c42780f4fb4359595b", "state": "P04 golden package re-checked" },
+    { "file": "regression/reg-05-award-decision-golden-1440x900.png", "sha256": "722f97fac06a6be6d5b797d714c0a4343254a99a5e6c0435c99b7b6c84ba5170", "state": "P05 golden AWD-2026-008 re-checked — inline source link now underlined (accessibility fix)" },
+    { "file": "regression/reg-06-finance-validation-golden-1440x900.png", "sha256": "f1c30209c90467e6a1da8cc797923580abb50ec2c99d59891a38a2c1cc9351c6", "state": "P06 golden FV-2026-018 re-checked" },
+    { "file": "regression/reg-07-purchase-order-golden-1440x900.png", "sha256": "1f956ce4665093142b0c43d06029ff789d53ac41fb056b273636a6cafb7bf14b", "state": "P07 golden PO-2026-041 re-checked" },
+    { "file": "regression/reg-08-fulfilment-golden-1440x900.png", "sha256": "b2e9d2302a898127e59bd8804c4e7ced361649ba90bddcc498336b7624003c17", "state": "P08 golden GRN-2026-0041 re-checked" },
+    { "file": "regression/reg-09-payment-voucher-golden-1440x900.png", "sha256": "79f3696d4b4d4ce8db98961fedfc24b64b5a86caf1136c6986a79015792f720b", "state": "P09 golden PV-2026-0076 re-checked" },
+    { "file": "regression/reg-10-control-room-after-checkpoint7-1440x900.png", "sha256": "ef6264145fe6c2279fbfa590cad630d25ba3f4594b512d25bf0b0c6fb36394df", "state": "P01 re-checked after the full RBAC-gated demo chain ran to PAID — currency guard still correctly shows Certified actual/Cash paid as Incomplete (mixed GHS/USD), no regression" },
+    { "file": "rbac/rbac-01-validate-lock-BLOCKED-as-procurement-1440x900.png", "sha256": "b443a7b3bd9325462fbebf3eaa812dd312b85508daef9c9029d604096ae2d596", "state": "validateAndLockRoute (P06) — live-blocked acting as Procurement Officer, real server response, not a hidden button" },
+    { "file": "rbac/rbac-02-validate-lock-ALLOWED-as-finance-1440x900.png", "sha256": "5e12e2dba90a7efe0258c1192f615fe6cff760caa373822b2ebff842e0d968a0", "state": "Same action — live-allowed after switching to Finance Reviewer, route locked, readiness 67%->83%" },
+    { "file": "rbac/rbac-03-open-fulfilment-BLOCKED-as-finance-1440x900.png", "sha256": "e30f0a6e65018700b966725b2406ae300a1862dbbe2ee36b8e4ca7207bf1f91d", "state": "openFulfilment (P07) — live-blocked acting as Finance Reviewer" },
+    { "file": "rbac/rbac-04-open-fulfilment-ALLOWED-as-procurement-1440x900.png", "sha256": "5cd32a80f894be392f8ccac8f8f73761c35cbc68ee5f5babe6168db7d970bbaf", "state": "Same action — live-allowed as Procurement Officer, DRAFT fulfilment created" },
+    { "file": "rbac/rbac-05-post-receipt-BLOCKED-as-procurement-1440x900.png", "sha256": "0437ce74c9adeb42ff1ddeb988d4f08a0a9e0288774c795cc69aed2f09dfec37", "state": "postAcceptedReceipt (P08) — live-blocked acting as Procurement Officer" },
+    { "file": "rbac/rbac-06-post-receipt-ALLOWED-as-receiver-1440x900.png", "sha256": "29f7df4610b89f4722755304438b3c56b41a75a501cb6ef1cbdb06e463475b53", "state": "Same action — live-allowed as Storekeeper/Receiver, receipt posted" },
+    { "file": "rbac/rbac-07-open-pv-BLOCKED-as-receiver-1440x900.png", "sha256": "085718082630a0c02e783ac34bb3424df1f0b9ea581dd297584d28e04b94aab1", "state": "openPaymentVoucher (P08 bridge) — live-blocked acting as Storekeeper/Receiver ('receiver cannot alone certify payment value')" },
+    { "file": "rbac/rbac-08-open-pv-ALLOWED-as-qs-commercial-1440x900.png", "sha256": "0f4d792c4b496ec278754409bf036f5b80f6cf0f0008a5e6d64492c5339fba46", "state": "Same action — live-allowed as QS/Commercial Lead, DRAFT voucher created" },
+    { "file": "rbac/rbac-09-approve-pay-BLOCKED-as-qs-commercial-1440x900.png", "sha256": "f45e020b841c5a1458a2409f73661ffb74685cbd640b0a0631ac42c734bbfbb9", "state": "approveAndReleasePayment (P09) — live-blocked acting as QS/Commercial Lead ('payment preparation, approval and execution are separable functions')" },
+    { "file": "rbac/rbac-10-approve-pay-ALLOWED-as-finance-1440x900.png", "sha256": "4d26160f6574ae8605a28969c74ff5366c87838eef8d65b479d527761e6fbb42", "state": "Same action — live-allowed as Finance Reviewer, voucher PAID, immutable thereafter" },
+    { "file": "a11y-keyboard-focus-check-1440x900.png", "sha256": "734c84f3aead3d4eff57f7592652eb2fa8177e97e66e9f1520e545662b80a7ef", "state": "25-Tab keyboard walkthrough on P06 — focus-visible ring renders correctly on the active tab; readiness sidecar's live SoD check visible" }
+  ],
+  "axeScan": {
+    "tool": "axe-core (WCAG 2 A + AA rules)",
+    "pagesScanned": ["control-room", "requests-register", "request-dossier", "finance-validation", "purchase-order", "payment-voucher"],
+    "beforeFix": { "link-in-text-block": "2 violations (payment-voucher page) — links distinguished only by color", "color-contrast": "28-70 nodes per page — see disclosed conflict in CHECKPOINT_7_REPORT.md" },
+    "afterFix": { "link-in-text-block": "0 violations — fixed by adding underline to all 14 inline source links app-wide", "color-contrast": "unchanged — see disclosed design-authority conflict, not silently resolved" }
+  },
+  "notesOnMissingStates": "RBAC demonstrated on 5 of 8 gated actions (the full P06-P09 live chain); approvePrepareRequestPackage/openAwardDecision/approveSendToFinance are also server-gated (see code) but not separately screenshotted here since the golden/demo records they'd act on are already in a terminal state after reseed. Only 6 of 9 pages were axe-scanned (representative sample, not exhaustive). Full WCAG 2.2 AA audit (200% zoom, screen-reader landmark/table walkthrough, reduced-motion) not performed — disclosed gap."
+}

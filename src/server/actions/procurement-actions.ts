@@ -13,12 +13,14 @@ import {
   awardLines,
   financeValidations,
 } from "@/db/schema";
+import { getActorRole, requireRole, type Role } from "@/lib/auth";
 
 export type OpenAwardResult =
   | { status: "created"; awardReference: string }
   | { status: "already_exists"; awardReference: string }
   | { status: "blocked"; reason: string }
-  | { status: "not_found" };
+  | { status: "not_found" }
+  | { status: "forbidden"; requiredRole: Role; actorRole: Role };
 
 /**
  * PAGE_04 primary transition — "Open/Prepare Award Decision". Implements:
@@ -30,9 +32,15 @@ export type OpenAwardResult =
  * share; is idempotent (no duplicate award on retry). NOT implemented:
  * permission/version revalidation, full comparison-version locking,
  * clarification effects, audit event persistence — disclosed gaps, see
- * CHECKPOINT_3_REPORT.md.
+ * CHECKPOINT_3_REPORT.md. Permission revalidation is now real (Checkpoint
+ * 7) — requires PROCUREMENT, matching the SoD matrix's "Package/source"
+ * and "Evaluate/award recommend" rows.
  */
 export async function openAwardDecision(projectReference: string, packageReference: string): Promise<OpenAwardResult> {
+  const actorRole = await getActorRole();
+  const permission = requireRole(actorRole, "PROCUREMENT");
+  if (!permission.ok) return { status: "forbidden", requiredRole: permission.requiredRole, actorRole: permission.actorRole };
+
   const pkg = await db.query.procurementPackages.findFirst({ where: eq(procurementPackages.reference, packageReference) });
   if (!pkg) return { status: "not_found" };
 
@@ -111,7 +119,8 @@ export async function openAwardDecision(projectReference: string, packageReferen
 export type ApproveSendToFinanceResult =
   | { status: "created"; financeReference: string }
   | { status: "already_exists"; financeReference: string }
-  | { status: "not_found" };
+  | { status: "not_found" }
+  | { status: "forbidden"; requiredRole: Role; actorRole: Role };
 
 /**
  * PAGE_05 primary transition — "Approve & Send to Finance". Applies the
@@ -125,12 +134,19 @@ export type ApproveSendToFinanceResult =
  * Validation on retry. Keeps Procurement's route as recommendation only,
  * consistent with the master execution prompt's binding-Finance-route
  * invariant (the created record's `route` is not locked/validated here —
- * that's Page 06's job).
+ * that's Page 06's job). Permission revalidation is now real (Checkpoint
+ * 7) — requires PROJECT_DIRECTOR, matching the SoD matrix's "Evaluate/
+ * award recommend ... approve" cell (Project/Director approves what
+ * Procurement recommends — separable functions).
  */
 export async function approveSendToFinance(
   projectReference: string,
   awardReference: string
 ): Promise<ApproveSendToFinanceResult> {
+  const actorRole = await getActorRole();
+  const permission = requireRole(actorRole, "PROJECT_DIRECTOR");
+  if (!permission.ok) return { status: "forbidden", requiredRole: permission.requiredRole, actorRole: permission.actorRole };
+
   const award = await db.query.awardDecisions.findFirst({ where: eq(awardDecisions.reference, awardReference) });
   if (!award) return { status: "not_found" };
 

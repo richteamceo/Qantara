@@ -4,12 +4,14 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { fulfilmentEntries, purchaseOrderLines } from "@/db/schema";
+import { getActorRole, requireRole, type Role } from "@/lib/auth";
 
 export type PostReceiptResult =
   | { status: "posted"; accepted: number; rejected: number; outstanding: number }
   | { status: "already_posted" }
   | { status: "invalid"; reason: string }
-  | { status: "not_found" };
+  | { status: "not_found" }
+  | { status: "forbidden"; requiredRole: Role; actorRole: Role };
 
 /**
  * PAGE_08 primary transition — "Post Accepted Receipt/Confirm Service".
@@ -19,7 +21,9 @@ export type PostReceiptResult =
  * disclosed gap, see CHECKPOINT_5_REPORT.md). Immutable once posted:
  * calling again on a POSTED record returns already_posted rather than
  * overwriting (contract: "Posted receipt is immutable; correction uses
- * reversal/version" — reversal itself isn't implemented).
+ * reversal/version" — reversal itself isn't implemented). Permission
+ * revalidation is now real (Checkpoint 7) — requires RECEIVER, matching
+ * the SoD matrix's "Receive/inspect" row.
  */
 export async function postAcceptedReceipt(
   projectReference: string,
@@ -27,6 +31,10 @@ export async function postAcceptedReceipt(
   acceptedQty: number,
   rejectedQty: number
 ): Promise<PostReceiptResult> {
+  const actorRole = await getActorRole();
+  const permission = requireRole(actorRole, "RECEIVER");
+  if (!permission.ok) return { status: "forbidden", requiredRole: permission.requiredRole, actorRole: permission.actorRole };
+
   const fulfilment = await db.query.fulfilmentEntries.findFirst({ where: eq(fulfilmentEntries.reference, fulfilmentReference) });
   if (!fulfilment) return { status: "not_found" };
   if (fulfilment.status !== "DRAFT") return { status: "already_posted" };

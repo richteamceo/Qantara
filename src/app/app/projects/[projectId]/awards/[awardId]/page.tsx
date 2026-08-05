@@ -30,7 +30,7 @@ export default async function AwardDecisionPage({
         </nav>
         <div title="Golden-transaction rail not built yet (Checkpoint 4+)" className="mt-1 text-[11px] text-c1x-muted-2">
           Package source: {" "}
-          <a href={`/app/projects/${data.project.reference}/procurement-packages/${data.packageReference}`} className="text-c1x-blue">
+          <a href={`/app/projects/${data.project.reference}/procurement-packages/${data.packageReference}`} className="text-c1x-blue underline underline-offset-2">
             {data.packageReference}
           </a>
         </div>
@@ -184,7 +184,7 @@ export default async function AwardDecisionPage({
 
       {activeTab === "Comparison Basis" && (
         <div className="rounded-[var(--c1x-radius-surface)] border border-c1x-line bg-c1x-surface p-4 text-sm">
-          <a href={`/app/projects/${data.project.reference}/procurement-packages/${data.packageReference}`} className="text-c1x-blue">
+          <a href={`/app/projects/${data.project.reference}/procurement-packages/${data.packageReference}`} className="text-c1x-blue underline underline-offset-2">
             View full comparison on {data.packageReference} →
           </a>
         </div>
