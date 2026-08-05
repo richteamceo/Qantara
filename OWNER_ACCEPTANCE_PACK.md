@@ -35,7 +35,7 @@ across Checkpoints 1-11, not a disclosed-and-accepted simplification.
 | 9 | Self-scoped: backup/restore drill with corruption-detection proof | `CHECKPOINT_9_REPORT.md` |
 | 10 | Self-scoped: measured performance/N+1 query audit across all 9 pages | `CHECKPOINT_10_REPORT.md` |
 | 11 | Self-scoped: security audit (secrets, injection, XSS, dependencies) | `CHECKPOINT_11_REPORT.md` |
-| 12 | **Correction, not self-scoped**: real multi-tier approval chains (Procurement → Finance/Admin → MD at Request stage; Accountant → MD at Finance Validation stage), sourced from the source workbook and the pack's own `WORKFLOW_AND_APPROVAL_ENGINE_STANDARD.md`/`BR-APR-001` — absent from Checkpoints 1-11 | `CHECKPOINT_12_REPORT.md` |
+| 12 | **Correction, not self-scoped**: real multi-tier approval chains (Procurement → Finance/Admin → MD at Request stage; Accountant → MD at Finance Validation stage), sourced from the source workbook and the pack's own `WORKFLOW_AND_APPROVAL_ENGINE_STANDARD.md`/`BR-APR-001` — absent from Checkpoints 1-11 | `CHECKPOINT_12_REPORT.md`, `CHECKPOINT_12_ADDENDUM.md` |
 
 Every checkpoint's status is **NOT OWNER-ACCEPTED**. This pack does not
 change that — it is a navigation aid for review, not a self-certification.
@@ -119,8 +119,9 @@ Fresh clone → `npm install` → `npx drizzle-kit migrate` → `npx tsx src/db/
 7. The pre-existing `drizzle-kit`/`esbuild` dev-dependency advisory (CP8) — accept as dev-only risk or invest in the breaking downgrade.
 8. Is a local pg_dump/restore drill (CP9) sufficient evidence for this build's current stage, or should backup/restore be re-tested against a real managed-database environment before that gap is considered closed?
 9. Is the P06 control-room-reuse inefficiency (CP10) worth fixing now, or acceptable until request volume grows enough to matter?
-10. Checkpoint 12 built the two approval chains explicitly evidenced in `REQUESTER`/`PROCUREMENT` and `FINANCE VALIDATION`. Is that the complete set the owner meant by "ACROSS THE WHOLE SYSTEM," or do other stages (Award Decision's `approveSendToFinance`, Fulfilment's receipt posting, PDF/document release) also need their own workbook-sourced multi-actor chains? The workbook was not re-searched for approval columns on those specific sheets in Checkpoint 12.
+10. ~~Checkpoint 12 built the two approval chains explicitly evidenced in `REQUESTER`/`PROCUREMENT` and `FINANCE VALIDATION`. Is that the complete set...~~ **Resolved for Award Decision and Fulfilment** (`CHECKPOINT_12_ADDENDUM.md`, owner-requested cross-check): `PO REGISTER`/`PURCHASE ORDER`'s "Auth"/"Approval Status" columns are read-only reflections of the Chain-A decision, not independent approval inputs; `GRN`'s `INSPECTED BY`/`ACCEPTANCE STATUS` is single-actor, matching the existing `RECEIVER` gate. No further chains needed in those two areas. **Still open**: whether PDF/document release or other stages beyond these need anything.
 11. Now that a workbook-sourced `MANAGING_DIRECTOR` role exists (CP12), should it absorb/replace `PROJECT_DIRECTOR`'s existing `approveSendToFinance` transition (CP3, sourced from the pack's SoD matrix, not the workbook), or are the two deliberately distinct functions?
+12. **New (CP12 addendum)**: the workbook's `VO REGISTER` sheet evidences a complete, real Variation Order transaction type (raise, value against BOQ baseline, single-actor approve) that CORE1X has never modeled in any checkpoint — no schema, page, or action exists for it. Is this in scope for a future checkpoint, or deliberately out of scope for this build?
 
 ## 8. Status
 
