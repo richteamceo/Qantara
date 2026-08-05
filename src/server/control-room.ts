@@ -55,6 +55,7 @@ export type ControlAccountRow = {
   openCommitment: number;
   openCommitmentCurrency: string | null;
   certifiedActual: number;
+  certifiedActualCurrency: string | null;
   variance: MetricValue;
   activeGate: string;
 };
@@ -128,6 +129,7 @@ type RequestChainRow = {
   pvTaxAdditions: string | null;
   pvNetPayable: string | null;
   pvStatus: string | null;
+  pvCurrency: string | null;
 };
 
 export async function getControlRoomData(
@@ -177,6 +179,7 @@ export async function getControlRoomData(
       pvTaxAdditions: paymentVouchers.taxAdditions,
       pvNetPayable: paymentVouchers.netPayable,
       pvStatus: paymentVouchers.status,
+      pvCurrency: paymentVouchers.currency,
     })
     .from(requests)
     .where(eq(requests.projectId, project.id))
@@ -200,6 +203,7 @@ export async function getControlRoomData(
       openCommitment: number;
       openCommitmentCurrency: string | null;
       certifiedActual: number;
+      certifiedActualCurrency: string | null;
       hasFulfilment: boolean;
     }
   >();
@@ -214,13 +218,12 @@ export async function getControlRoomData(
     settle: { count: 0, amount: 0, currency: null },
   };
   let totalCashPaid = 0;
+  let cashPaidCurrency: string | null = null;
   const decisions: DecisionItem[] = [];
 
-  // Fulfilment/PV records don't carry their own currency field yet (open
-  // gap — every other downstream table has needed one eventually, see
-  // CHECKPOINT_3/4 reports; certifiedActual/cashPaid are next once the
-  // demo chain reaches Page 08/09). Everything else now has a real
-  // per-record currency.
+  // Every downstream money-bearing table now carries its own real
+  // currency, including payment_vouchers (added Checkpoint 6) — certified
+  // actual and cash paid are guarded the same way as every other KPI here.
   for (const r of rows) {
     const bucket = perAccount.get(r.controlAccountId) ?? {
       requestPipeline: 0,
@@ -230,6 +233,7 @@ export async function getControlRoomData(
       openCommitment: 0,
       openCommitmentCurrency: null,
       certifiedActual: 0,
+      certifiedActualCurrency: null,
       hasFulfilment: false,
     };
     if (r.fulfilmentId) bucket.hasFulfilment = true;
@@ -240,7 +244,11 @@ export async function getControlRoomData(
 
     if (r.paymentVoucherId) {
       bucket.certifiedActual += certifiedGross;
-      if (r.pvStatus === "PAID") totalCashPaid += Number(r.pvNetPayable);
+      bucket.certifiedActualCurrency = mergeCurrency(bucket.certifiedActualCurrency, r.pvCurrency!);
+      if (r.pvStatus === "PAID") {
+        totalCashPaid += Number(r.pvNetPayable);
+        cashPaidCurrency = mergeCurrency(cashPaidCurrency, r.pvCurrency!);
+      }
     }
 
     if (r.purchaseOrderId) {
@@ -263,11 +271,11 @@ export async function getControlRoomData(
     if (r.paymentVoucherId) {
       lifecycleCounts.settle.count += 1;
       lifecycleCounts.settle.amount += Number(r.pvNetPayable);
-      lifecycleCounts.settle.currency = mergeCurrency(lifecycleCounts.settle.currency, project.currency);
+      lifecycleCounts.settle.currency = mergeCurrency(lifecycleCounts.settle.currency, r.pvCurrency!);
     } else if (r.fulfilmentId) {
       lifecycleCounts.fulfilment.count += 1;
       lifecycleCounts.fulfilment.amount += certifiedGross;
-      lifecycleCounts.fulfilment.currency = mergeCurrency(lifecycleCounts.fulfilment.currency, project.currency);
+      lifecycleCounts.fulfilment.currency = mergeCurrency(lifecycleCounts.fulfilment.currency, r.purchaseOrderCurrency!);
     } else if (r.purchaseOrderId) {
       lifecycleCounts.order.count += 1;
       lifecycleCounts.order.amount += Number(r.purchaseOrderGross);
@@ -324,6 +332,7 @@ export async function getControlRoomData(
       openCommitment: 0,
       openCommitmentCurrency: null,
       certifiedActual: 0,
+      certifiedActualCurrency: null,
       hasFulfilment: false,
     };
     const budget = Number(a.currentBudget);
@@ -333,7 +342,7 @@ export async function getControlRoomData(
     if (b.requestPipeline !== 0 && b.requestPipelineCurrency) currencySet.add(b.requestPipelineCurrency);
     if (b.awardedNotOrdered !== 0 && b.awardedNotOrderedCurrency) currencySet.add(b.awardedNotOrderedCurrency);
     if (b.openCommitment !== 0 && b.openCommitmentCurrency) currencySet.add(b.openCommitmentCurrency);
-    if (b.certifiedActual !== 0) currencySet.add(project.currency);
+    if (b.certifiedActual !== 0 && b.certifiedActualCurrency) currencySet.add(b.certifiedActualCurrency);
 
     const variance: MetricValue =
       currencySet.size === 1
@@ -360,6 +369,7 @@ export async function getControlRoomData(
       openCommitment: b.openCommitment,
       openCommitmentCurrency: b.openCommitmentCurrency,
       certifiedActual: b.certifiedActual,
+      certifiedActualCurrency: b.certifiedActualCurrency,
       variance,
       activeGate: b.certifiedActual > 0 || b.hasFulfilment ? "Fulfilment / PV & Settle" : b.awardedNotOrdered + b.openCommitment > 0 ? "Order & Commit" : b.requestPipeline > 0 ? "Approval control" : "Demand & BOQ gate",
     };
@@ -376,6 +386,11 @@ export async function getControlRoomData(
     accountRows.filter((a) => a.openCommitment !== 0 && a.openCommitmentCurrency).map((a) => a.openCommitmentCurrency!)
   );
   const openCommitmentCurrency = openCommitmentCurrencies.size <= 1 ? ([...openCommitmentCurrencies][0] ?? project.currency) : null;
+  const certifiedCurrencies = new Set(
+    accountRows.filter((a) => a.certifiedActual !== 0 && a.certifiedActualCurrency).map((a) => a.certifiedActualCurrency!)
+  );
+  const certifiedActualCurrency = certifiedCurrencies.size <= 1 ? ([...certifiedCurrencies][0] ?? project.currency) : null;
+  const resolvedCashPaidCurrency = cashPaidCurrency === MIXED_CURRENCY ? null : cashPaidCurrency ?? project.currency;
 
   const currency = project.currency;
 
@@ -459,11 +474,17 @@ export async function getControlRoomData(
               status: "incomplete",
               reason: "Control accounts have mixed budget currencies — not summed into one misleading figure",
             },
-      certifiedActual: {
-        status: "computed",
-        value: { amount: totalCertified, currency },
-        basis: "Sum of gross payment-voucher-certified value (accepted net + tax additions)",
-      },
+      certifiedActual:
+        certifiedActualCurrency !== null
+          ? {
+              status: "computed",
+              value: { amount: totalCertified, currency: certifiedActualCurrency },
+              basis: "Sum of gross payment-voucher-certified value (accepted net + tax additions)",
+            }
+          : {
+              status: "incomplete",
+              reason: "Certified-actual amounts are in different currencies — not summed into one misleading figure",
+            },
       openCommitments:
         openCommitmentCurrency !== null
           ? {
@@ -494,11 +515,17 @@ export async function getControlRoomData(
         status: "incomplete",
         reason: "Forecast & Cashflow model not implemented yet (deferred) — not shown as zero",
       },
-      cashPaid: {
-        status: "computed",
-        value: { amount: totalCashPaid, currency },
-        basis: "Sum of payment-voucher net payable where status = PAID",
-      },
+      cashPaid:
+        resolvedCashPaidCurrency !== null
+          ? {
+              status: "computed",
+              value: { amount: totalCashPaid, currency: resolvedCashPaidCurrency },
+              basis: "Sum of payment-voucher net payable where status = PAID",
+            }
+          : {
+              status: "incomplete",
+              reason: "Paid amounts are in different currencies — not summed into one misleading figure",
+            },
       controlConfidence: {
         status: "computed",
         score: Math.round((passCount / readiness.length) * 100),

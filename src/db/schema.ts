@@ -332,6 +332,8 @@ export const paymentVouchers = pgTable("payment_vouchers", {
   taxAdditions: numeric("tax_additions", { precision: 18, scale: 2 }).notNull().default("0"),
   wht: numeric("wht", { precision: 18, scale: 2 }).notNull().default("0"),
   netPayable: numeric("net_payable", { precision: 18, scale: 2 }).notNull(),
+  /** Added Checkpoint 6 proactively — the currency-mislabeling bug class hit award_decisions/finance_validations/purchase_orders in Checkpoints 3-4; every money-bearing table gets its own currency from the start now. */
+  currency: text("currency").notNull(),
   status: paymentVoucherStatusEnum("status").notNull().default("DRAFT"),
   paidAt: timestamp("paid_at", { withTimezone: true }),
 });

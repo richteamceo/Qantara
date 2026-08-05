@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getFulfilmentData } from "@/server/fulfilment";
 import { PostReceiptForm } from "@/components/procurement/PostReceiptForm";
+import { OpenPaymentVoucherButton } from "@/components/procurement/OpenPaymentVoucherButton";
 import { formatMoney } from "@/lib/format";
 
 export default async function FulfilmentPage({
@@ -43,6 +44,20 @@ export default async function FulfilmentPage({
               >
                 Save Draft
               </span>
+              {data.fulfilment.status === "POSTED" &&
+                (data.paymentVoucherReference ? (
+                  <a
+                    href={`/app/projects/${data.project.reference}/payment-vouchers/${data.paymentVoucherReference}`}
+                    className="c1x-focusable rounded-[var(--c1x-radius-control)] bg-c1x-blue px-3 py-1.5 text-xs font-medium text-white"
+                  >
+                    Open {data.paymentVoucherReference}
+                  </a>
+                ) : (
+                  <OpenPaymentVoucherButton
+                    projectReference={data.project.reference}
+                    fulfilmentReference={data.fulfilment.reference}
+                  />
+                ))}
             </div>
             <span
               aria-disabled="true"

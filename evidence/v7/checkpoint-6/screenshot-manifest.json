@@ -1,0 +1,21 @@
+{
+  "checkpoint": 6,
+  "pages": ["P09 — Payment Voucher and Settlement"],
+  "capturedWith": "Playwright (chromium), 2026-08-05",
+  "screenshots": [
+    { "file": "P09/pv-golden-summary-1440x900.png", "sha256": "f182169e236b7759c791f84171c1f000a7aada27e572f967c161f43c4a56b995", "state": "PV-2026-0076 PAID — Voucher Summary tab, matches PAGE_09 fixture exactly (net 174,952 / tax 34,990 / WHT 3,499 / net payable 206,443)" },
+    { "file": "P09/pv-golden-three-way-match-1440x900.png", "sha256": "c603c380971c15ca29b15bab4a7a0a27c5b99ae93f397e66f48d172bdfd9b818", "state": "PO-2026-041 vs GRN-2026-0041 two-way match, zero variance, concrete line" },
+    { "file": "P09/pv-golden-tax-deductions-1440x900.png", "sha256": "127a4c584d839a37ad8201f0e8c697ff60fddfa4d80902ac540c49babaf2b537", "state": "Amount bridge — 174,952 + 34,990 = 209,942 gross, − 3,499 WHT = 206,443 net payable, reconciles exactly" },
+    { "file": "control-room-before-checkpoint6-1440x900.png", "sha256": "fc99fec1e772968288835b46b03e0f0c8d86459c9d5556160057f462c2c151e5", "state": "Page 01 baseline before this checkpoint's live transition — identical to Checkpoint 5's fresh-reseed baseline (nothing demo-related run yet), expected" },
+    { "file": "P09/grn-demo-posted-cp6-1440x900.png", "sha256": "7d28a9e6c959e58485b0d1c086835685f42773c11528cff2034310d73d4172af", "state": "GRN-DEMO-0001-L1 freshly re-posted live this session (500/500 m2 accepted) — full demo chain re-driven from a clean reseed since it is not persisted in seed.ts" },
+    { "file": "P09/grn-demo-posted-with-pv-bridge-1440x900.png", "sha256": "c66016bcdd7cce94cf1fbb2f2e210b3c8910c0323ac9013d7612015ab4bf7477", "state": "Same page after reload — new 'Certify & Open Payment Voucher' bridge button now visible (Checkpoint 6 addition to P08's header)" },
+    { "file": "P09/pv-demo-draft-1440x900.png", "sha256": "a18b53fd3704e5e7a726df6bc2449c1cb164778af90b60a2bceed9c313686a50", "state": "PV-DEMO-0001 DRAFT — live-created by Certify & Open Payment Voucher, US$9,595/1,919/192/11,322, currency USD throughout" },
+    { "file": "P09/pv-demo-draft-tax-tab-1440x900.png", "sha256": "42387a3a388ed34d0acd54fd690a90c75a3199df719e264b3cbc532d6eac3ce5", "state": "Same voucher's Tax & Deductions amount bridge, USD" },
+    { "file": "P09/pv-demo-paid-1440x900.png", "sha256": "972b08d613681738f60f3547c678114e428a194df31517e90401aef7ea1184bb", "state": "PV-DEMO-0001 PAID — live-posted via Approve Voucher & Release Payment, immutable thereafter" },
+    { "file": "P09/po-demo-after-pv-1440x900.png", "sha256": "829b75617329d628243216264a9596d8a81331c3752912263834940687d74ed0", "state": "PO-DEMO-0001 re-checked — unchanged from Checkpoint 5 (PV posting doesn't alter PO-page KPIs), expected hash match" },
+    { "file": "control-room-after-checkpoint6-1440x900.png", "sha256": "0f5386b76d6fc993dd50b9e58d194ab0d905ba60a0c6df5726e2fc777bbfb0e9", "state": "Page 01 re-checked after demo PV paid — Certified actual and Cash paid KPIs correctly flip to Incomplete/mixed-currency (GHS 209,942 golden + USD 11,514/11,322 demo present simultaneously for the first time); per-row table correctly tags GHS vs USD instead of mislabeling both GHS (currency bug found and fixed this checkpoint, see report)" },
+    { "file": "requests-register-after-checkpoint6-1440x900.png", "sha256": "673910b65cd677e7a12da2b9c6a2dda3dcbfc09801ed2bd4beb83e0f4ebd6ea3", "state": "P02 re-checked for regressions — identical to Checkpoint 5 (P09 doesn't feed this page), expected hash match" },
+    { "file": "request-dossier-demo-after-checkpoint6-1440x900.png", "sha256": "1531fdac4f5ea003fc1fa5de0370d396d4cfe07af63830fa5e2196467fd8b344", "state": "P03 MR-DEMO-0001 re-checked for regressions — identical to Checkpoint 5, expected hash match" }
+  ],
+  "notesOnMissingStates": "Only 'populated' plus one live before/after transition per page. Match pending, tolerance exception, tax review, approval pending (separate from paid), payment instructed, bank reconciliation pending, reconciled, part-paid, advance open/recovered, returned, reversed, cancelled, closed period, and all tabs marked 'soon' (Documents/Accounting-Posting/Workflow/Audit Trail) are not covered — disclosed gap, consistent with prior checkpoints."
+}

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { projects, fulfilmentEntries, purchaseOrderLines, purchaseOrders, awardDecisions, financeValidations } from "@/db/schema";
+import { projects, fulfilmentEntries, purchaseOrderLines, purchaseOrders, awardDecisions, financeValidations, paymentVouchers } from "@/db/schema";
 
 export type ReadinessCheck = { key: string; label: string; status: "pass" | "fail"; detail: string };
 
@@ -21,6 +21,7 @@ export type FulfilmentData = {
   readiness: ReadinessCheck[];
   readinessScore: number;
   canPost: boolean;
+  paymentVoucherReference: string | null;
 };
 
 export async function getFulfilmentData(projectReference: string, fulfilmentReference: string): Promise<FulfilmentData | null> {
@@ -55,6 +56,8 @@ export async function getFulfilmentData(projectReference: string, fulfilmentRefe
   ];
   const readinessScore = Math.round((readiness.filter((c) => c.status === "pass").length / readiness.length) * 100);
 
+  const voucher = await db.query.paymentVouchers.findFirst({ where: eq(paymentVouchers.fulfilmentId, fulfilment.id) });
+
   return {
     project: { reference: project.reference, name: project.name },
     fulfilment: {
@@ -81,5 +84,6 @@ export async function getFulfilmentData(projectReference: string, fulfilmentRefe
     readiness,
     readinessScore,
     canPost: fulfilment.status === "DRAFT",
+    paymentVoucherReference: voucher?.reference ?? null,
   };
 }

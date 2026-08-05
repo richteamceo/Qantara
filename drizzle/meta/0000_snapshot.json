@@ -1,5 +1,5 @@
 {
-  "id": "db4140f7-767d-4794-a926-ebce299716e5",
+  "id": "edf8f524-f187-4d58-b51b-68bf3ff5d584",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -657,6 +657,12 @@
         "net_payable": {
           "name": "net_payable",
           "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },

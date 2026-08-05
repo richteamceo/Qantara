@@ -568,6 +568,7 @@ async function seed() {
     taxAdditions: "34990.00",
     wht: "3499.00",
     netPayable: "206443.00",
+    currency: "GHS",
     status: "PAID",
     paidAt: new Date("2026-08-04T12:00:00Z"),
   });

@@ -99,6 +99,7 @@ CREATE TABLE "payment_vouchers" (
 	"tax_additions" numeric(18, 2) DEFAULT '0' NOT NULL,
 	"wht" numeric(18, 2) DEFAULT '0' NOT NULL,
 	"net_payable" numeric(18, 2) NOT NULL,
+	"currency" text NOT NULL,
 	"status" "payment_voucher_status" DEFAULT 'DRAFT' NOT NULL,
 	"paid_at" timestamp with time zone,
 	CONSTRAINT "payment_vouchers_reference_unique" UNIQUE("reference")
