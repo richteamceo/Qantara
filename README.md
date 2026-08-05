@@ -2,9 +2,10 @@
 
 Construction-commercial control application, built against the CORE1X V7.0
 design-authority pack under a gated checkpoint process. See
-`GATE_0_INTAKE_REPORT.md` and `CHECKPOINT_1_REPORT.md` for status — the
-current build is Checkpoint 1 (application shell + Project Commercial
-Control Room), **not owner-accepted**.
+`OWNER_ACCEPTANCE_PACK.md` for the consolidated, current status across all
+checkpoints (currently through Checkpoint 13) — every checkpoint remains
+**not owner-accepted**; that pack, not this file, is kept current after
+each one.
 
 ## Stack
 
@@ -25,11 +26,16 @@ npm run dev
 Open `/` for the projects index, or go directly to
 `/app/projects/SWTBK/control-room`.
 
+## Deploying
+
+See `DEPLOYMENT.md` for a Vercel + managed Postgres walkthrough.
+
 ## Scope
 
-Only Page 01 (Control Room) is implemented, against a deliberately narrow
-slice of the full canonical domain model — enough to compute its KPIs from
-real, joined data rather than fabricate them. See `CHECKPOINT_1_REPORT.md`
-for exactly what is and isn't built yet, and
-`evidence/v7/checkpoint-1/P01/` for reconciliation evidence and
-screenshots.
+Nine V7 page contracts plus two self-scoped additions (a real multi-tier
+approval engine, a Variation Order register) are implemented against a
+deliberately narrow slice of the full canonical domain model — enough to
+compute every KPI from real, joined data rather than fabricate it. See
+`OWNER_ACCEPTANCE_PACK.md` for what's built and what's still an open gap;
+individual `CHECKPOINT_N_REPORT.md` files and `evidence/v7/checkpoint-N/`
+have the detail and reconciliation evidence per checkpoint.
