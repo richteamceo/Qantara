@@ -171,7 +171,18 @@ export default async function RequestDossierPage({
               <Field label="Created" value={data.request.createdAt.slice(0, 10)} />
               <Field label="Need-by date" value={data.request.needByDate?.slice(0, 10) ?? "—"} />
               <Field label="Requested currency" value={data.kpis.requestedValue.status === "computed" ? data.kpis.requestedValue.value.currency : "—"} />
-              <Field label="Package" value={data.packageReference ?? "Not yet allocated"} />
+              <div>
+                <dt className="text-xs font-medium text-c1x-muted">Package</dt>
+                <dd className="text-c1x-ink">
+                  {data.packageReference ? (
+                    <a href={`/app/projects/${data.project.reference}/procurement-packages/${data.packageReference}`} className="text-c1x-blue">
+                      {data.packageReference}
+                    </a>
+                  ) : (
+                    "Not yet allocated"
+                  )}
+                </dd>
+              </div>
               <Field label="Measure/QTO revision, drawing reference" value="Not modelled (Checkpoint 3+)" />
             </dl>
           </div>

@@ -8,7 +8,9 @@ import {
   requests,
   requestLines,
   procurementPackages,
+  quotations,
   awardDecisions,
+  awardLines,
   financeValidations,
   purchaseOrders,
   fulfilmentEntries,
@@ -127,7 +129,9 @@ async function seed() {
   // BOQ verification against the real workbook was done independently for
   // each line (see boqSourceNote per row); the results differ per line and
   // are reported as found, not smoothed into a consistent story.
-  await db.insert(requestLines).values([
+  const goldenLines = await db
+    .insert(requestLines)
+    .values([
     {
       requestId: request.id,
       lineNo: 1,
@@ -182,13 +186,21 @@ async function seed() {
         "and named in EXCEPTION_AND_DECISION_CONTROL_STANDARD.md's seeded exception set (EXC-003/006/008). " +
         "A real, valid exception authority — not a BOQ quantity lookup, so no available-quantity figure applies.",
     },
-  ]);
+    ])
+    .returning();
 
   // Demo request — NOT part of the golden-transaction-fixture.json
   // authority. Added in Checkpoint 2 because the golden request is already
   // APPROVED with a package/award/PO/PV downstream, so it can't exercise
   // "Approve & Prepare Package" or most register/dossier states. Flagged
   // via isDemoData/demoNote everywhere it's read, not silently mixed in.
+  //
+  // Status is APPROVED and a package already exists below (Checkpoint 3):
+  // the "Approve & Prepare Package" transition was proven live in
+  // Checkpoint 2 (see evidence/v7/checkpoint-2/P03/dossier-demo-*), and its
+  // result is now baked into the deterministic seed baseline so Checkpoint
+  // 3 can build on top of it and exercise its OWN transitions
+  // (Open/Prepare Award Decision, Approve & Send to Finance) live instead.
   const [demoRequest] = await db
     .insert(requests)
     .values({
@@ -197,7 +209,7 @@ async function seed() {
       reference: "MR-DEMO-0001",
       controlledEstimate: "9595.00",
       currency: "USD",
-      status: "SUBMITTED",
+      status: "APPROVED",
       requestedBy: "Site QS Team",
       workArea: "Ground Floor — Block & Masonry",
       needByDate: new Date("2026-08-20T00:00:00Z"),
@@ -207,28 +219,32 @@ async function seed() {
       demoNote:
         "Added in Checkpoint 2 to exercise the 'Approve & Prepare Package' transition and " +
         "register/dossier states the (already fully-advanced) golden transaction cannot. Not part " +
-        "of golden-transaction-fixture.json.",
+        "of golden-transaction-fixture.json. Its package (below) is now part of the seed baseline " +
+        "as of Checkpoint 3 — see CHECKPOINT_3_REPORT.md.",
     })
     .returning();
 
-  await db.insert(requestLines).values({
-    requestId: demoRequest.id,
-    lineNo: 1,
-    description: "150mm hollow concrete block — GF walls (general)",
-    costType: "MAT",
-    authorityType: "BOQ",
-    authorityReference: "MASON-GF-BLK150-098",
-    requestedQty: "500.000",
-    requestedUnit: "m2",
-    exposureAmount: "9595.00",
-    exposureCurrency: "USD",
-    boqAvailableQty: "15065.644",
-    boqSourceNote:
-      "Verified: BOQ MASTER row 98, item MASON-GF-BLK150-098 — 15065.644 m2 available (0 issued), " +
-      "real rate USD 19.19/m2. This line's exposure (500 x 19.19 = USD 9,595.00) was computed at the " +
-      "workbook's own real rate — unlike the golden fixture's concrete line, this one is internally " +
-      "consistent with its cited BOQ source.",
-  });
+  await db
+    .insert(requestLines)
+    .values({
+      requestId: demoRequest.id,
+      lineNo: 1,
+      description: "150mm hollow concrete block — GF walls (general)",
+      costType: "MAT",
+      authorityType: "BOQ",
+      authorityReference: "MASON-GF-BLK150-098",
+      requestedQty: "500.000",
+      requestedUnit: "m2",
+      exposureAmount: "9595.00",
+      exposureCurrency: "USD",
+      boqAvailableQty: "15065.644",
+      boqSourceNote:
+        "Verified: BOQ MASTER row 98, item MASON-GF-BLK150-098 — 15065.644 m2 available (0 issued), " +
+        "real rate USD 19.19/m2. This line's exposure (500 x 19.19 = USD 9,595.00) was computed at the " +
+        "workbook's own real rate — unlike the golden fixture's concrete line, this one is internally " +
+        "consistent with its cited BOQ source.",
+    })
+    .returning();
 
   const [pkg] = await db
     .insert(procurementPackages)
@@ -238,8 +254,54 @@ async function seed() {
       estimate: "1382400.00",
       invitedSuppliers: 4,
       status: "AWARDED",
+      sourcingMethod: "Competitive RFQ",
     })
     .returning();
+
+  // Bid comparison per 03_PAGE_CONTRACTS/PAGE_04_PROCUREMENT_PACKAGE.md
+  // §Normalized comparison fixture — pack-sourced amounts, not invented.
+  await db.insert(quotations).values([
+    {
+      packageId: pkg.id,
+      supplier: "Acme Ready-Mix Ghana",
+      netAmount: "1365960.00",
+      currency: "GHS",
+      receivedAt: new Date("2026-07-26T10:00:00Z"),
+      validUntil: new Date("2026-08-09T00:00:00Z"),
+      isSoleSource: false,
+      technicallyCompliant: true,
+    },
+    {
+      packageId: pkg.id,
+      supplier: "Ghacem Concrete",
+      netAmount: "1386800.00",
+      currency: "GHS",
+      receivedAt: new Date("2026-07-25T10:00:00Z"),
+      validUntil: new Date("2026-08-08T00:00:00Z"),
+      isSoleSource: false,
+      technicallyCompliant: true,
+    },
+    {
+      packageId: pkg.id,
+      supplier: "BuildMix",
+      netAmount: "1412400.00",
+      currency: "GHS",
+      receivedAt: new Date("2026-07-27T10:00:00Z"),
+      validUntil: new Date("2026-08-10T00:00:00Z"),
+      isSoleSource: false,
+      technicallyCompliant: true,
+    },
+    {
+      packageId: pkg.id,
+      supplier: "PrimeCrete",
+      netAmount: "1473900.00",
+      currency: "GHS",
+      receivedAt: new Date("2026-07-24T10:00:00Z"),
+      validUntil: new Date("2026-08-07T00:00:00Z"),
+      isSoleSource: false,
+      technicallyCompliant: true,
+    },
+  ]);
 
   const [award] = await db
     .insert(awardDecisions)
@@ -248,10 +310,88 @@ async function seed() {
       reference: "AWD-2026-008",
       supplier: "Acme Ready-Mix Ghana",
       net: "1365960.00",
+      currency: "GHS",
       saving: "16440.00",
       status: "SENT_TO_FINANCE",
+      competitionResult: "Competitive — 4 bids received, Acme rank 1 (lowest compliant)",
+      deviationCode: null,
+      deviationReason: null,
     })
     .returning();
+
+  // Award line breakdown per PAGE_05_AWARD_DECISION.md §Line decisions
+  // fixture — reconciles to award.net (1,104,960 + 87,000 + 174,000 =
+  // 1,365,960) and links back to the originating request line for real
+  // lineage, including the line whose BOQ authority was never found
+  // (goldenLines[1] / PLANT-SUB-PUMP-031) — the award still includes it,
+  // same disclosed contradiction as Checkpoint 2, not resolved here.
+  await db.insert(awardLines).values([
+    {
+      awardId: award.id,
+      requestLineId: goldenLines[0].id,
+      lineNo: 1,
+      description: "Premix RC concrete C30/35 vibrated — Raft Foundation (General)",
+      quantity: "240.000",
+      unit: "m3",
+      rate: "4604.00",
+      netAmount: "1104960.00",
+      currency: "GHS",
+    },
+    {
+      awardId: award.id,
+      requestLineId: goldenLines[1].id,
+      lineNo: 2,
+      description: "Concrete pump — 2 shifts",
+      quantity: "2.000",
+      unit: "shift",
+      rate: "43500.00",
+      netAmount: "87000.00",
+      currency: "GHS",
+    },
+    {
+      awardId: award.id,
+      requestLineId: goldenLines[2].id,
+      lineNo: 3,
+      description: "Concrete testing & quality assurance",
+      quantity: "1.000",
+      unit: "lot",
+      rate: "174000.00",
+      netAmount: "174000.00",
+      currency: "GHS",
+    },
+  ]);
+
+  // Demo package — the "Approve & Prepare Package" outcome from
+  // Checkpoint 2, now part of the seed baseline (see note on demoRequest
+  // above). Status COMPARED (one sole-source quote received, not yet
+  // awarded) so Checkpoint 3's own "Open/Prepare Award Decision"
+  // transition has something real to exercise live.
+  const [demoPkg] = await db
+    .insert(procurementPackages)
+    .values({
+      requestId: demoRequest.id,
+      reference: "PPK-DEMO-0001",
+      estimate: "9595.00",
+      invitedSuppliers: 1,
+      status: "COMPARED",
+      sourcingMethod: "Sole Source",
+    })
+    .returning();
+
+  // Supplier is real, not invented: SUPPLIER LIST sheet of Cost Control
+  // System.xlsm, row 44, NR-GH-SP-037 "SAFE GLOBAL", dealership "Block
+  // Supplier". Quoted at exactly the BOQ-verified rate (500 x 19.19 =
+  // 9,595.00) — no markup modelled, disclosed as a simplification.
+  await db.insert(quotations).values({
+    packageId: demoPkg.id,
+    supplier: "SAFE GLOBAL (NR-GH-SP-037)",
+    netAmount: "9595.00",
+    currency: "USD",
+    receivedAt: new Date("2026-08-04T09:00:00Z"),
+    validUntil: new Date("2026-08-18T00:00:00Z"),
+    isSoleSource: true,
+    technicallyCompliant: true,
+  });
 
   const [fv] = await db
     .insert(financeValidations)
@@ -260,6 +400,7 @@ async function seed() {
       reference: "FV-2026-018",
       route: "CREDIT",
       grossOrderValue: "1639152.00",
+      currency: "GHS",
       netPayable: "1611833.00",
       status: "VALIDATED",
       validatedAt: new Date("2026-08-01T09:00:00Z"),

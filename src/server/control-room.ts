@@ -51,6 +51,7 @@ export type ControlAccountRow = {
   requestPipeline: number;
   requestPipelineCurrency: string | null;
   awardedNotOrdered: number;
+  awardedNotOrderedCurrency: string | null;
   openCommitment: number;
   certifiedActual: number;
   variance: MetricValue;
@@ -111,8 +112,11 @@ type RequestChainRow = {
   packageEstimate: string | null;
   awardId: string | null;
   awardNet: string | null;
+  awardCurrency: string | null;
   financeValidationId: string | null;
   financeRoute: string | null;
+  financeGrossOrderValue: string | null;
+  financeValidationCurrency: string | null;
   purchaseOrderId: string | null;
   purchaseOrderGross: string | null;
   fulfilmentId: string | null;
@@ -156,8 +160,11 @@ export async function getControlRoomData(
       packageEstimate: procurementPackages.estimate,
       awardId: awardDecisions.id,
       awardNet: awardDecisions.net,
+      awardCurrency: awardDecisions.currency,
       financeValidationId: financeValidations.id,
       financeRoute: financeValidations.route,
+      financeGrossOrderValue: financeValidations.grossOrderValue,
+      financeValidationCurrency: financeValidations.currency,
       purchaseOrderId: purchaseOrders.id,
       purchaseOrderGross: purchaseOrders.gross,
       fulfilmentId: fulfilmentEntries.id,
@@ -186,6 +193,7 @@ export async function getControlRoomData(
       requestPipeline: number;
       requestPipelineCurrency: string | null;
       awardedNotOrdered: number;
+      awardedNotOrderedCurrency: string | null;
       openCommitment: number;
       certifiedActual: number;
     }
@@ -214,6 +222,7 @@ export async function getControlRoomData(
       requestPipeline: 0,
       requestPipelineCurrency: null,
       awardedNotOrdered: 0,
+      awardedNotOrderedCurrency: null,
       openCommitment: 0,
       certifiedActual: 0,
     };
@@ -231,6 +240,7 @@ export async function getControlRoomData(
       bucket.openCommitment += Number(r.purchaseOrderGross) - certifiedGross;
     } else if (r.awardId) {
       bucket.awardedNotOrdered += Number(r.awardNet);
+      bucket.awardedNotOrderedCurrency = mergeCurrency(bucket.awardedNotOrderedCurrency, r.awardCurrency!);
     } else if (r.packageId) {
       bucket.requestPipeline += Number(r.packageEstimate);
       bucket.requestPipelineCurrency = mergeCurrency(bucket.requestPipelineCurrency, r.requestCurrency);
@@ -256,15 +266,15 @@ export async function getControlRoomData(
       lifecycleCounts.order.currency = mergeCurrency(lifecycleCounts.order.currency, project.currency);
     } else if (r.financeValidationId) {
       lifecycleCounts.financeValidation.count += 1;
-      lifecycleCounts.financeValidation.amount += Number(r.purchaseOrderGross ?? 0);
+      lifecycleCounts.financeValidation.amount += Number(r.financeGrossOrderValue ?? 0);
       lifecycleCounts.financeValidation.currency = mergeCurrency(
         lifecycleCounts.financeValidation.currency,
-        project.currency
+        r.financeValidationCurrency!
       );
     } else if (r.awardId) {
       lifecycleCounts.award.count += 1;
       lifecycleCounts.award.amount += Number(r.awardNet);
-      lifecycleCounts.award.currency = mergeCurrency(lifecycleCounts.award.currency, project.currency);
+      lifecycleCounts.award.currency = mergeCurrency(lifecycleCounts.award.currency, r.awardCurrency!);
     } else if (r.packageId) {
       lifecycleCounts.package.count += 1;
       lifecycleCounts.package.amount += Number(r.packageEstimate);
@@ -302,6 +312,7 @@ export async function getControlRoomData(
       requestPipeline: 0,
       requestPipelineCurrency: null,
       awardedNotOrdered: 0,
+      awardedNotOrderedCurrency: null,
       openCommitment: 0,
       certifiedActual: 0,
     };
@@ -310,7 +321,7 @@ export async function getControlRoomData(
 
     const currencySet = new Set<string>([a.currency]);
     if (b.requestPipeline !== 0 && b.requestPipelineCurrency) currencySet.add(b.requestPipelineCurrency);
-    if (b.awardedNotOrdered !== 0) currencySet.add(project.currency);
+    if (b.awardedNotOrdered !== 0 && b.awardedNotOrderedCurrency) currencySet.add(b.awardedNotOrderedCurrency);
     if (b.openCommitment !== 0) currencySet.add(project.currency);
     if (b.certifiedActual !== 0) currencySet.add(project.currency);
 
@@ -335,6 +346,7 @@ export async function getControlRoomData(
       requestPipeline: b.requestPipeline,
       requestPipelineCurrency: b.requestPipelineCurrency,
       awardedNotOrdered: b.awardedNotOrdered,
+      awardedNotOrderedCurrency: b.awardedNotOrderedCurrency,
       openCommitment: b.openCommitment,
       certifiedActual: b.certifiedActual,
       variance,
@@ -345,6 +357,10 @@ export async function getControlRoomData(
   const totalCertified = accountRows.reduce((s, a) => s + a.certifiedActual, 0);
   const totalOpenCommitment = accountRows.reduce((s, a) => s + a.openCommitment, 0);
   const totalAwardedNotOrdered = accountRows.reduce((s, a) => s + a.awardedNotOrdered, 0);
+  const awardedCurrencies = new Set(
+    accountRows.filter((a) => a.awardedNotOrdered !== 0 && a.awardedNotOrderedCurrency).map((a) => a.awardedNotOrderedCurrency!)
+  );
+  const awardedNotOrderedCurrency = awardedCurrencies.size <= 1 ? ([...awardedCurrencies][0] ?? project.currency) : null;
 
   const currency = project.currency;
 
@@ -438,11 +454,17 @@ export async function getControlRoomData(
         value: { amount: totalOpenCommitment, currency },
         basis: "Sum of order gross less certified gross, per open purchase order",
       },
-      approvedNotOrdered: {
-        status: "computed",
-        value: { amount: totalAwardedNotOrdered, currency },
-        basis: "Sum of award net value for awards without an issued purchase order",
-      },
+      approvedNotOrdered:
+        awardedNotOrderedCurrency !== null
+          ? {
+              status: "computed",
+              value: { amount: totalAwardedNotOrdered, currency: awardedNotOrderedCurrency },
+              basis: "Sum of award net value for awards without an issued purchase order",
+            }
+          : {
+              status: "incomplete",
+              reason: "Awarded-not-ordered amounts are in different currencies — not summed into one misleading figure",
+            },
       pipelineRisk: {
         status: "incomplete",
         reason: "Risk model not implemented yet (deferred) — not shown as zero",

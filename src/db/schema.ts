@@ -14,11 +14,13 @@ import {
  *
  * This is a deliberate subset of the full canonical domain model in
  * 04_ENGINEERING_CONTRACTS/CANONICAL_DOMAIN_MODEL_V7_DELTA.md — enough to
- * honestly compute Page 01 (Control Room) from real, queryable records.
- * Deferred entities (Supplier/Quotation/ComparisonVersion, Exception*,
- * Workflow*, Evidence*, Advance*, tax component breakdown, multi-version
- * PO amendments) are listed as gaps in the Checkpoint-1 evidence report,
- * not silently implied here.
+ * honestly compute Pages 01-05 from real, queryable records. `quotations`
+ * (Checkpoint 3) is a flattened single-version snapshot, not the full
+ * Supplier/Invitation/QuotationVersion/QuotationLine/NormalizationAdjustment
+ * model. Deferred entities (full Supplier master data, ComparisonVersion,
+ * Exception*, Workflow*, Evidence*, Advance*, tax component breakdown,
+ * multi-version PO amendments) are listed as gaps in each checkpoint's
+ * evidence report, not silently implied here.
  */
 
 export const financeRouteEnum = pgEnum("finance_route", [
@@ -186,6 +188,22 @@ export const procurementPackages = pgTable("procurement_packages", {
   estimate: numeric("estimate", { precision: 18, scale: 2 }).notNull(),
   invitedSuppliers: integer("invited_suppliers").notNull().default(0),
   status: packageStatusEnum("status").notNull().default("OPEN"),
+  /** "Competitive RFQ" / "Sole Source" — real per package, drives the P04 comparison-tab and sole-source disclosure. */
+  sourcingMethod: text("sourcing_method"),
+});
+
+export const quotations = pgTable("quotations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  packageId: uuid("package_id")
+    .notNull()
+    .references(() => procurementPackages.id),
+  supplier: text("supplier").notNull(),
+  netAmount: numeric("net_amount", { precision: 18, scale: 2 }).notNull(),
+  currency: text("currency").notNull(),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull(),
+  validUntil: timestamp("valid_until", { withTimezone: true }),
+  isSoleSource: boolean("is_sole_source").notNull().default(false),
+  technicallyCompliant: boolean("technically_compliant").notNull().default(true),
 });
 
 export const awardDecisions = pgTable("award_decisions", {
@@ -196,8 +214,30 @@ export const awardDecisions = pgTable("award_decisions", {
   reference: text("reference").notNull().unique(),
   supplier: text("supplier").notNull(),
   net: numeric("net", { precision: 18, scale: 2 }).notNull(),
+  /** Added Checkpoint 3 — the golden award is GHS (assumed); the demo award is genuinely USD (its winning quotation's currency). */
+  currency: text("currency").notNull().default("GHS"),
   saving: numeric("saving", { precision: 18, scale: 2 }).notNull().default("0"),
   status: awardStatusEnum("status").notNull().default("DRAFT"),
+  /** "Competitive - N bids" / "Sole source" — mirrors the winning quotation's context. */
+  competitionResult: text("competition_result"),
+  /** Mandatory deviation reason per PAGE_05 (non-lowest, sole source, split award, etc.) — null when the award is a clean lowest-compliant-bid case. */
+  deviationCode: text("deviation_code"),
+  deviationReason: text("deviation_reason"),
+});
+
+export const awardLines = pgTable("award_lines", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  awardId: uuid("award_id")
+    .notNull()
+    .references(() => awardDecisions.id),
+  requestLineId: uuid("request_line_id").references(() => requestLines.id),
+  lineNo: integer("line_no").notNull(),
+  description: text("description").notNull(),
+  quantity: numeric("quantity", { precision: 18, scale: 3 }).notNull(),
+  unit: text("unit").notNull(),
+  rate: numeric("rate", { precision: 18, scale: 4 }).notNull(),
+  netAmount: numeric("net_amount", { precision: 18, scale: 2 }).notNull(),
+  currency: text("currency").notNull(),
 });
 
 export const financeValidations = pgTable("finance_validations", {
@@ -208,6 +248,8 @@ export const financeValidations = pgTable("finance_validations", {
   reference: text("reference").notNull().unique(),
   route: financeRouteEnum("route").notNull(),
   grossOrderValue: numeric("gross_order_value", { precision: 18, scale: 2 }).notNull(),
+  /** Added Checkpoint 3 — the golden fixture's FV is GHS (assumed, matching the rest of that chain); the demo award is genuinely USD. */
+  currency: text("currency").notNull().default("GHS"),
   netPayable: numeric("net_payable", { precision: 18, scale: 2 }).notNull(),
   status: financeValidationStatusEnum("status").notNull().default("PENDING"),
   validatedAt: timestamp("validated_at", { withTimezone: true }),

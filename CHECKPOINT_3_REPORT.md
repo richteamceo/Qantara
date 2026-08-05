@@ -1,0 +1,40 @@
+# Owner Checkpoint Report
+
+Using the template in `05_CLAUDE_CODE_EXECUTION/OWNER_CHECKPOINT_REPORT_TEMPLATE.md`.
+
+1. **Checkpoint/page:** Checkpoint 3 — Procurement Package / Bid Comparison (P04) + Award Decision (P05).
+2. **Branch and commit:** `claude/design-authority-review-azeq82`, on top of Checkpoint 1 (+ addendum) and Checkpoint 2.
+3. **Production files changed:** `src/server/procurement-package.ts`, `src/server/award-decision.ts` (new), `src/server/actions/procurement-actions.ts` (new — two transitions), `src/app/app/projects/[projectId]/procurement-packages/**`, `src/app/app/projects/[projectId]/awards/**` (new routes), `src/components/procurement/*` (new), `src/db/schema.ts`/`src/db/seed.ts` (new `quotations` and `award_lines` tables, `currency` added to `award_decisions`/`finance_validations`, `sourcingMethod`/`competitionResult`/`deviationCode`/`deviationReason` fields), `src/server/control-room.ts` + `ExposureDonut.tsx`/`ControlSheet.tsx` (currency guard extended further — two real bugs found and fixed, see §7).
+4. **Schema/migrations:** squashed fresh `drizzle/0000_omniscient_nova.sql` (still dev-only data). Added `quotations` (9 columns), `award_lines` (10 columns, links back to `request_lines` for real lineage); added `currency` to `award_decisions` and `finance_validations` (previously missing entirely — a real gap, not just this checkpoint's addition).
+5. **Routes/services/APIs:** `/app/projects/:projectId/procurement-packages/:packageId` and `/app/projects/:projectId/awards/:awardId` — both match the pack's canonical route shapes exactly. Two new Server Actions: `openAwardDecision`, `approveSendToFinance`.
+6. **Permissions/SoD:** Unchanged disclosed gap (no auth model). Notably, PAGE_05's real SoD requirement — "Finance route lock requires Finance permission specifically, not Procurement UI state" — is *architecturally* respected even without auth: `approveSendToFinance` creates a `PENDING` Finance Validation but does not lock/validate the route; that's explicitly left for a future Page 06, matching the pack's own invariant that Procurement's action is recommendation-only.
+7. **Formula reconciliations:** see `evidence/v7/checkpoint-3/formula-reconciliation.md`. Golden package/award figures (4 bids, evaluated spread, award line breakdown, variance) all reconcile exactly to the pack's own fixture text in PAGE_04/PAGE_05. The demo chain's transitions were exercised live end-to-end (Open Award → sole-source deviation recorded → Approve & Send to Finance → real Ghana tax rates from the workbook's SETTINGS sheet applied). **Two more currency-mislabeling bugs were found and fixed during this checkpoint's own live verification** (not pre-existing-but-hidden — they only became reachable once a real USD award/Finance-Validation existed): `awardedNotOrdered` and the lifecycle spine's Award/Finance-Validation positions had no currency tracking at all (fixed by adding `currency` to `award_decisions`/`finance_validations` and extending the existing currency guard); the Exposure Composition donut briefly summed a USD figure into a GHS total before being caught and fixed (visible in the report's before/after description, not hidden).
+8. **Evidence/lineage/audit:** Award lines now link back to their originating `request_line` (`requestLineId`), giving real (if partial) lineage from request → award. No audit-event log or evidence-hash chain yet — same disclosed gap as prior checkpoints.
+9. **Tests:** No automated test suite. Verification: `tsc --noEmit`, `eslint`, `next build` clean; Playwright pass across both new pages (golden + demo) plus the full live demo transition sequence (package → award → Finance Validation), zero console errors throughout; Page 01 re-checked immediately after to confirm no regression and to catch the two currency bugs described in §7.
+10. **Build and deterministic install:** `npm run build` succeeds. No new npm dependencies.
+11. **Browser states and viewports:** "Populated" only, 1440×900, both pages, plus the live before/after of two chained transitions. Most of each page's contract-required state list not covered (see `evidence/v7/checkpoint-3/screenshot-manifest.json`).
+12. **Screenshot manifest and hashes:** `evidence/v7/checkpoint-3/screenshot-manifest.json`.
+13. **Region-by-region authority comparison** against `07_REFERENCE_ASSETS/APPROVED_SCREENSHOTS/04-procurement-package.jpg` / `05-award-decision.jpg`: not performed (Gate 3/5 work, same disclosed cut as prior checkpoints). Built for P04: header/actions (Issue Clarification disabled, Open Award Decision real), 5-cell KPI strip (all real), 6 of 12 tabs real (Overview, Lines, Source Requests, Suppliers, Quotations, Comparison — 6 disclosed "soon"). Built for P05: header/actions (Return to Evaluation disabled, Approve & Send to Finance real), 4-cell KPI strip, 4 of 8 tabs real (Decision Summary, Line Decisions, Comparison Basis, Exceptions — 4 disclosed "soon"). Not attempted: Suppliers master data (compliance/expiry/conflicts), Invitations/RFQ, Clarifications, per-line technical scoring, approval-chain visualization, Full Lineage drawer.
+14. **Console/network:** Zero console errors/warnings and zero failed requests across all pages and both live transitions.
+15. **Accessibility/performance/security:** Same disclosed gap as prior checkpoints — no automated scan. Same known row-behavior gap carried from Checkpoint 2 (reference-link only, not whole-row/keyboard) now also present on the comparison/lines tables here.
+16. **Defects:**
+    - *Major (disclosed, unresolved, inherited):* no auth/RBAC; no evidence/audit engine; register/table row-opening behavior (link-only, not whole-row).
+    - *Major (found and fixed this checkpoint, not left unresolved):* `awardedNotOrdered`/lifecycle-spine currency mislabeling; Exposure Composition donut cross-currency summation. Both are the same underlying class of bug as Checkpoint 1's spine double-counting and the Checkpoint 1/2 currency-guard work — each new real transaction exercises code paths the previous ones didn't reach, and each time this checkpoint's own live verification (not a later checkpoint, not the user) caught it before evidence capture.
+    - *Minor:* per-line technical/evaluated ranking not modelled (only whole-quotation ranking); route selection on Approve & Send to Finance is a simplified 2-way rule (REVIEW for sole-source, CREDIT otherwise), not the full `COST_TYPE_ROUTE_COMPATIBILITY` engine; tax basis not shown separately on the Decision Summary tab yet.
+17. **Approved variations:** none sought or granted.
+18. **Owner decisions required before Checkpoint 4:**
+    - Same three open items carried from `CHECKPOINT_1_ADDENDUM.md`, now touching a third and fourth entity (`award_decisions`, `finance_validations` both needed real `currency` columns this checkpoint — the "should the whole chain model per-transaction currency properly" question is getting more expensive to keep deferring).
+    - Is the simplified 2-way Finance route rule (REVIEW for sole-source, CREDIT otherwise) acceptable as a placeholder, or should Page 06 (Finance Validation) be the first checkpoint to implement the real route-eligibility engine rather than inheriting more simplified rules?
+    - Confirm the proportional line-allocation rule used by Open/Prepare Award Decision (award net split across request lines by each line's own exposure share) is the right general rule before it's exercised on a multi-line request.
+19. **Next proposed checkpoint (not started):** Checkpoint 4 — Page 06 (Finance Validation), per the pack's page-implementation order. Not started; no code written toward it.
+20. **Status:** `NOT OWNER-ACCEPTED`.
+
+---
+
+**Reproduction:** same as prior checkpoints. Fresh seed leaves
+`PPK-DEMO-0001` at `COMPARED` with no award — click "Open / Prepare Award
+Decision" on that package, then "Approve & Send to Finance" on the award
+it creates, to reproduce the "after" screenshots.
+
+CHECKPOINT 3 IMPLEMENTED AND VERIFIED — NOT OWNER-ACCEPTED — AWAITING
+OWNER REVIEW — DO NOT START ANOTHER PAGE.

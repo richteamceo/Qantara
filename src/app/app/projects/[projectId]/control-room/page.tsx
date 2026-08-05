@@ -178,9 +178,23 @@ export default async function ControlRoomPage({
                 position.openCommitments.status === "computed" ? position.openCommitments.value.amount : 0
               }
               approvedNotOrdered={
-                position.approvedNotOrdered.status === "computed" ? position.approvedNotOrdered.value.amount : 0
+                position.approvedNotOrdered.status === "computed" &&
+                position.approvedNotOrdered.value.currency === data.project.currency
+                  ? position.approvedNotOrdered.value.amount
+                  : 0
               }
               currency={data.project.currency}
+              excluded={
+                position.approvedNotOrdered.status === "computed" &&
+                position.approvedNotOrdered.value.currency !== data.project.currency
+                  ? [
+                      {
+                        label: "Approved not ordered",
+                        reason: `${position.approvedNotOrdered.value.currency} ${position.approvedNotOrdered.value.amount.toLocaleString()}`,
+                      },
+                    ]
+                  : []
+              }
             />
 
             {/* F. Forecast trajectory — deferred */}

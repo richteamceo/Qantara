@@ -1,0 +1,16 @@
+{
+  "checkpoint": 3,
+  "pages": ["P04 — Procurement Package / Bid Comparison", "P05 — Award Decision"],
+  "capturedWith": "Playwright (chromium), 2026-08-04",
+  "screenshots": [
+    { "file": "P04/package-golden-1440x900.png", "sha256": "9ed572a61c2ec014cd39bc2a040672c600e0cc3cd5f06239683b31976b7daff2", "state": "AWARDED package, Overview tab" },
+    { "file": "P04/package-demo-before-award-1440x900.png", "sha256": "b43b801f81544cf700ab5751dab9d5dfb13aad398c7a6b487f40640b5ddf63e8", "state": "COMPARED package (evaluation stage), before Open Award Decision" },
+    { "file": "P04/package-demo-after-award-1440x900.png", "sha256": "e039d93039d535eb639200115492b2c8ddcb02c373f2b88e5cd930d99008b96e", "state": "AWARDED after live transition — button replaced by real award link" },
+    { "file": "P05/award-golden-1440x900.png", "sha256": "5342bc98151f3447746228409cc326f61e9e4592ed06ea387eb50894fff63037", "state": "Decision Summary tab, SENT_TO_FINANCE" },
+    { "file": "P05/award-golden-lines-tab-1440x900.png", "sha256": "cd24bfd3058d9a56834aa369eb1d2ca8e7bdd3e0977e989b1987b2555f87a872", "state": "Line Decisions tab — reconciles to PAGE_05 fixture exactly" },
+    { "file": "P05/award-demo-before-finance-1440x900.png", "sha256": "99a9f16a69de913f8583faff2a3d45083fbb64d36e3ffb854bcd0a8e7e24196c", "state": "DRAFT award, sole-source deviation, before Approve & Send to Finance" },
+    { "file": "P05/award-demo-after-finance-1440x900.png", "sha256": "4236642cfe361273a61aeb20eefe0b8b811548be41cfda7bfb4be191e881efc4", "state": "SENT_TO_FINANCE after live transition — Finance Validation created" },
+    { "file": "control-room-after-checkpoint3-1440x900.png", "sha256": "e98f93ed421065261a49b048dbf09c4b1125d4d6a1670f014011c395a1035436", "state": "Page 01 re-checked after both P04/P05 transitions — Finance Validation lifecycle position now exercised for the first time, exposure-donut currency-exclusion bug fixed" }
+  ],
+  "notesOnMissingStates": "Only 'populated' + one live before/after transition per page. Full contract required-states lists (draft package, sourcing, partially invited, no bids, late bid, clarification blocked, split award, expired validity for P04; returned, rejected, partially approved, superseded, Finance returned for P05) not covered — disclosed gap."
+}

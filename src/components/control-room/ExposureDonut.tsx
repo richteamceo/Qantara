@@ -2,17 +2,24 @@ import { formatMoney } from "@/lib/format";
 
 type Slice = { label: string; amount: number; color: string };
 
-/** Region E — Exposure composition. Pipeline risk is excluded (incomplete, not zero — see readiness). */
+/**
+ * Region E — Exposure composition. Pipeline risk is always excluded
+ * (incomplete, not zero — see readiness). Any other contributor whose
+ * currency doesn't match this chart's currency is excluded too, rather
+ * than silently summed as if it matched — see `excluded`.
+ */
 export function ExposureDonut({
   certifiedActual,
   openCommitments,
   approvedNotOrdered,
   currency,
+  excluded = [],
 }: {
   certifiedActual: number;
   openCommitments: number;
   approvedNotOrdered: number;
   currency: string;
+  excluded?: { label: string; reason: string }[];
 }) {
   const slices: Slice[] = [
     { label: "Certified actual", amount: certifiedActual, color: "var(--c1x-teal)" },
@@ -69,6 +76,12 @@ export function ExposureDonut({
           </li>
         </ul>
       </div>
+      {excluded.length > 0 && (
+        <p className="mt-2 text-[11px] text-c1x-amber">
+          Excluded from this {currency} chart (different currency, no dated exchange rate available):{" "}
+          {excluded.map((e) => `${e.label} — ${e.reason}`).join("; ")}
+        </p>
+      )}
     </div>
   );
 }
