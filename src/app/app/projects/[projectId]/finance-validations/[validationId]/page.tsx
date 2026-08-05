@@ -78,9 +78,12 @@ export default async function FinanceValidationPage({
                 Export Evidence
               </span>
               {data.purchaseOrderReference && (
-                <span className="rounded-[var(--c1x-radius-control)] bg-c1x-green/10 px-3 py-1.5 text-xs font-medium text-c1x-green">
-                  {data.purchaseOrderReference} issued
-                </span>
+                <a
+                  href={`/app/projects/${data.project.reference}/purchase-orders/${data.purchaseOrderReference}`}
+                  className="c1x-focusable rounded-[var(--c1x-radius-control)] bg-c1x-blue px-3 py-1.5 text-xs font-medium text-white"
+                >
+                  Open {data.purchaseOrderReference}
+                </a>
               )}
             </div>
             <span

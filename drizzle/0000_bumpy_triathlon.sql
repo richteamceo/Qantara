@@ -1,6 +1,7 @@
 CREATE TYPE "public"."award_status" AS ENUM('DRAFT', 'SENT_TO_FINANCE');--> statement-breakpoint
 CREATE TYPE "public"."finance_route" AS ENUM('CREDIT', 'CASH', 'ADVANCE', 'URGENT', 'DIRECT', 'REVIEW');--> statement-breakpoint
 CREATE TYPE "public"."finance_validation_status" AS ENUM('PENDING', 'VALIDATED');--> statement-breakpoint
+CREATE TYPE "public"."fulfilment_status" AS ENUM('DRAFT', 'POSTED');--> statement-breakpoint
 CREATE TYPE "public"."package_status" AS ENUM('OPEN', 'COMPARED', 'AWARDED');--> statement-breakpoint
 CREATE TYPE "public"."payment_voucher_status" AS ENUM('DRAFT', 'APPROVED', 'PAID');--> statement-breakpoint
 CREATE TYPE "public"."purchase_order_status" AS ENUM('ISSUED', 'AMENDED', 'CLOSED');--> statement-breakpoint
@@ -73,7 +74,9 @@ CREATE TABLE "finance_validations" (
 CREATE TABLE "fulfilment_entries" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"purchase_order_id" uuid NOT NULL,
+	"purchase_order_line_id" uuid NOT NULL,
 	"reference" text NOT NULL,
+	"status" "fulfilment_status" DEFAULT 'DRAFT' NOT NULL,
 	"delivered_qty" numeric(18, 3) NOT NULL,
 	"accepted_qty" numeric(18, 3) NOT NULL,
 	"rejected_qty" numeric(18, 3) NOT NULL,
@@ -120,6 +123,21 @@ CREATE TABLE "projects" (
 	"currency" text NOT NULL,
 	"reporting_period" text NOT NULL,
 	CONSTRAINT "projects_reference_unique" UNIQUE("reference")
+);
+--> statement-breakpoint
+CREATE TABLE "purchase_order_lines" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"purchase_order_id" uuid NOT NULL,
+	"award_line_id" uuid,
+	"line_no" integer NOT NULL,
+	"description" text NOT NULL,
+	"quantity" numeric(18, 3) NOT NULL,
+	"unit" text NOT NULL,
+	"rate" numeric(18, 4) NOT NULL,
+	"net" numeric(18, 2) NOT NULL,
+	"tax_amount" numeric(18, 2) NOT NULL,
+	"gross" numeric(18, 2) NOT NULL,
+	"currency" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "purchase_orders" (
@@ -187,9 +205,12 @@ ALTER TABLE "baselines" ADD CONSTRAINT "baselines_project_id_projects_id_fk" FOR
 ALTER TABLE "control_accounts" ADD CONSTRAINT "control_accounts_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "finance_validations" ADD CONSTRAINT "finance_validations_award_id_award_decisions_id_fk" FOREIGN KEY ("award_id") REFERENCES "public"."award_decisions"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "fulfilment_entries" ADD CONSTRAINT "fulfilment_entries_purchase_order_id_purchase_orders_id_fk" FOREIGN KEY ("purchase_order_id") REFERENCES "public"."purchase_orders"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "fulfilment_entries" ADD CONSTRAINT "fulfilment_entries_purchase_order_line_id_purchase_order_lines_id_fk" FOREIGN KEY ("purchase_order_line_id") REFERENCES "public"."purchase_order_lines"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payment_vouchers" ADD CONSTRAINT "payment_vouchers_fulfilment_id_fulfilment_entries_id_fk" FOREIGN KEY ("fulfilment_id") REFERENCES "public"."fulfilment_entries"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "procurement_packages" ADD CONSTRAINT "procurement_packages_request_id_requests_id_fk" FOREIGN KEY ("request_id") REFERENCES "public"."requests"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "projects" ADD CONSTRAINT "projects_organisation_id_organisations_id_fk" FOREIGN KEY ("organisation_id") REFERENCES "public"."organisations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "purchase_order_lines" ADD CONSTRAINT "purchase_order_lines_purchase_order_id_purchase_orders_id_fk" FOREIGN KEY ("purchase_order_id") REFERENCES "public"."purchase_orders"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "purchase_order_lines" ADD CONSTRAINT "purchase_order_lines_award_line_id_award_lines_id_fk" FOREIGN KEY ("award_line_id") REFERENCES "public"."award_lines"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "purchase_orders" ADD CONSTRAINT "purchase_orders_finance_validation_id_finance_validations_id_fk" FOREIGN KEY ("finance_validation_id") REFERENCES "public"."finance_validations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "quotations" ADD CONSTRAINT "quotations_package_id_procurement_packages_id_fk" FOREIGN KEY ("package_id") REFERENCES "public"."procurement_packages"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "request_lines" ADD CONSTRAINT "request_lines_request_id_requests_id_fk" FOREIGN KEY ("request_id") REFERENCES "public"."requests"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

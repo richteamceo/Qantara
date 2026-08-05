@@ -67,6 +67,11 @@ export const paymentVoucherStatusEnum = pgEnum("payment_voucher_status", [
   "PAID",
 ]);
 
+export const fulfilmentStatusEnum = pgEnum("fulfilment_status", [
+  "DRAFT",
+  "POSTED",
+]);
+
 export const requestLineAuthorityEnum = pgEnum("request_line_authority_type", [
   "BOQ",
   "EXCEPTION",
@@ -281,12 +286,35 @@ export const purchaseOrders = pgTable("purchase_orders", {
   issuedAt: timestamp("issued_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const purchaseOrderLines = pgTable("purchase_order_lines", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  purchaseOrderId: uuid("purchase_order_id")
+    .notNull()
+    .references(() => purchaseOrders.id),
+  awardLineId: uuid("award_line_id").references(() => awardLines.id),
+  lineNo: integer("line_no").notNull(),
+  description: text("description").notNull(),
+  quantity: numeric("quantity", { precision: 18, scale: 3 }).notNull(),
+  unit: text("unit").notNull(),
+  rate: numeric("rate", { precision: 18, scale: 4 }).notNull(),
+  net: numeric("net", { precision: 18, scale: 2 }).notNull(),
+  /** VAT+NHIL+GETFund at 20% combined, per line — same real rate as the Finance Validation formula bridge. */
+  taxAmount: numeric("tax_amount", { precision: 18, scale: 2 }).notNull(),
+  gross: numeric("gross", { precision: 18, scale: 2 }).notNull(),
+  currency: text("currency").notNull(),
+});
+
 export const fulfilmentEntries = pgTable("fulfilment_entries", {
   id: uuid("id").primaryKey().defaultRandom(),
   purchaseOrderId: uuid("purchase_order_id")
     .notNull()
     .references(() => purchaseOrders.id),
+  /** Added Checkpoint 5 — the golden fixture's GRN is for one specific PO line (concrete, not pump/testing); fulfilment is genuinely per-line, not per-PO. */
+  purchaseOrderLineId: uuid("purchase_order_line_id")
+    .notNull()
+    .references(() => purchaseOrderLines.id),
   reference: text("reference").notNull().unique(),
+  status: fulfilmentStatusEnum("status").notNull().default("DRAFT"),
   deliveredQty: numeric("delivered_qty", { precision: 18, scale: 3 }).notNull(),
   acceptedQty: numeric("accepted_qty", { precision: 18, scale: 3 }).notNull(),
   rejectedQty: numeric("rejected_qty", { precision: 18, scale: 3 }).notNull(),

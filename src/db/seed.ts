@@ -13,6 +13,7 @@ import {
   awardLines,
   financeValidations,
   purchaseOrders,
+  purchaseOrderLines,
   fulfilmentEntries,
   paymentVouchers,
 } from "./schema";
@@ -325,41 +326,44 @@ async function seed() {
   // lineage, including the line whose BOQ authority was never found
   // (goldenLines[1] / PLANT-SUB-PUMP-031) — the award still includes it,
   // same disclosed contradiction as Checkpoint 2, not resolved here.
-  await db.insert(awardLines).values([
-    {
-      awardId: award.id,
-      requestLineId: goldenLines[0].id,
-      lineNo: 1,
-      description: "Premix RC concrete C30/35 vibrated — Raft Foundation (General)",
-      quantity: "240.000",
-      unit: "m3",
-      rate: "4604.00",
-      netAmount: "1104960.00",
-      currency: "GHS",
-    },
-    {
-      awardId: award.id,
-      requestLineId: goldenLines[1].id,
-      lineNo: 2,
-      description: "Concrete pump — 2 shifts",
-      quantity: "2.000",
-      unit: "shift",
-      rate: "43500.00",
-      netAmount: "87000.00",
-      currency: "GHS",
-    },
-    {
-      awardId: award.id,
-      requestLineId: goldenLines[2].id,
-      lineNo: 3,
-      description: "Concrete testing & quality assurance",
-      quantity: "1.000",
-      unit: "lot",
-      rate: "174000.00",
-      netAmount: "174000.00",
-      currency: "GHS",
-    },
-  ]);
+  const goldenAwardLines = await db
+    .insert(awardLines)
+    .values([
+      {
+        awardId: award.id,
+        requestLineId: goldenLines[0].id,
+        lineNo: 1,
+        description: "Premix RC concrete C30/35 vibrated — Raft Foundation (General)",
+        quantity: "240.000",
+        unit: "m3",
+        rate: "4604.00",
+        netAmount: "1104960.00",
+        currency: "GHS",
+      },
+      {
+        awardId: award.id,
+        requestLineId: goldenLines[1].id,
+        lineNo: 2,
+        description: "Concrete pump — 2 shifts",
+        quantity: "2.000",
+        unit: "shift",
+        rate: "43500.00",
+        netAmount: "87000.00",
+        currency: "GHS",
+      },
+      {
+        awardId: award.id,
+        requestLineId: goldenLines[2].id,
+        lineNo: 3,
+        description: "Concrete testing & quality assurance",
+        quantity: "1.000",
+        unit: "lot",
+        rate: "174000.00",
+        netAmount: "174000.00",
+        currency: "GHS",
+      },
+    ])
+    .returning();
 
   // Demo package — the "Approve & Prepare Package" outcome from
   // Checkpoint 2, now part of the seed baseline (see note on demoRequest
@@ -492,11 +496,63 @@ async function seed() {
     })
     .returning();
 
+  // PO line breakdown per PAGE_07_PURCHASE_ORDER.md §Lines fixture —
+  // concrete gross GHS 1,325,952 is given verbatim; pump/testing gross are
+  // not stated individually but reconcile exactly at the same real 20%
+  // combined VAT+NHIL+GETFund rate used throughout (1,325,952 + 104,400 +
+  // 208,800 = 1,639,152, matching the PO's own seeded gross total).
+  const goldenPoLines = await db
+    .insert(purchaseOrderLines)
+    .values([
+      {
+        purchaseOrderId: po.id,
+        awardLineId: goldenAwardLines[0].id,
+        lineNo: 1,
+        description: "Premix RC concrete C30/35 vibrated — Raft Foundation (General)",
+        quantity: "240.000",
+        unit: "m3",
+        rate: "4604.00",
+        net: "1104960.00",
+        taxAmount: "220992.00",
+        gross: "1325952.00",
+        currency: "GHS",
+      },
+      {
+        purchaseOrderId: po.id,
+        awardLineId: goldenAwardLines[1].id,
+        lineNo: 2,
+        description: "Concrete pump — 2 shifts",
+        quantity: "2.000",
+        unit: "shift",
+        rate: "43500.00",
+        net: "87000.00",
+        taxAmount: "17400.00",
+        gross: "104400.00",
+        currency: "GHS",
+      },
+      {
+        purchaseOrderId: po.id,
+        awardLineId: goldenAwardLines[2].id,
+        lineNo: 3,
+        description: "Concrete testing & quality assurance",
+        quantity: "1.000",
+        unit: "lot",
+        rate: "174000.00",
+        net: "174000.00",
+        taxAmount: "34800.00",
+        gross: "208800.00",
+        currency: "GHS",
+      },
+    ])
+    .returning();
+
   const [fulfilment] = await db
     .insert(fulfilmentEntries)
     .values({
       purchaseOrderId: po.id,
+      purchaseOrderLineId: goldenPoLines[0].id,
       reference: "GRN-2026-0041",
+      status: "POSTED",
       deliveredQty: "40.000",
       acceptedQty: "38.000",
       rejectedQty: "2.000",

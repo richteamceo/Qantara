@@ -200,6 +200,7 @@ export async function getControlRoomData(
       openCommitment: number;
       openCommitmentCurrency: string | null;
       certifiedActual: number;
+      hasFulfilment: boolean;
     }
   >();
   const lifecycleCounts: Record<string, { count: number; amount: number; currency: string | null }> = {
@@ -229,7 +230,9 @@ export async function getControlRoomData(
       openCommitment: 0,
       openCommitmentCurrency: null,
       certifiedActual: 0,
+      hasFulfilment: false,
     };
+    if (r.fulfilmentId) bucket.hasFulfilment = true;
 
     const certifiedGross = r.paymentVoucherId
       ? Number(r.pvAcceptedNet) + Number(r.pvTaxAdditions)
@@ -321,6 +324,7 @@ export async function getControlRoomData(
       openCommitment: 0,
       openCommitmentCurrency: null,
       certifiedActual: 0,
+      hasFulfilment: false,
     };
     const budget = Number(a.currentBudget);
     const committedTotal = b.requestPipeline + b.awardedNotOrdered + b.openCommitment + b.certifiedActual;
@@ -357,7 +361,7 @@ export async function getControlRoomData(
       openCommitmentCurrency: b.openCommitmentCurrency,
       certifiedActual: b.certifiedActual,
       variance,
-      activeGate: b.certifiedActual > 0 ? "Fulfilment / PV & Settle" : b.awardedNotOrdered + b.openCommitment > 0 ? "Order & Commit" : b.requestPipeline > 0 ? "Approval control" : "Demand & BOQ gate",
+      activeGate: b.certifiedActual > 0 || b.hasFulfilment ? "Fulfilment / PV & Settle" : b.awardedNotOrdered + b.openCommitment > 0 ? "Order & Commit" : b.requestPipeline > 0 ? "Approval control" : "Demand & BOQ gate",
     };
   });
 

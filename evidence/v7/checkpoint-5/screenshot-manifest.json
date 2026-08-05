@@ -1,0 +1,22 @@
+{
+  "checkpoint": 5,
+  "pages": ["P07 — Purchase Order", "P08 — Fulfilment / GRN & Service Entry"],
+  "capturedWith": "Playwright (chromium), 2026-08-05",
+  "screenshots": [
+    { "file": "P07/po-golden-summary-1440x900.png", "sha256": "4aeaad27bfa3e8e3090f8b952e9c9909bfa2a5f7dd0d53d8929dea832e711057", "state": "PO-2026-041 ISSUED — Order Summary tab, gross GHS 1,639,152 / net GHS 1,365,960, fulfilled/certified balance 15.8% concrete only" },
+    { "file": "P07/po-golden-lines-1440x900.png", "sha256": "160202057f9d986a723432ca60c92feedd65da4f1028d8d8b8b04db891a8cdad", "state": "PO-2026-041 Lines tab — 3 lines (concrete/pump/testing), concrete line shows GRN-2026-0041 (POSTED), pump/testing show Not yet opened" },
+    { "file": "P08/grn-golden-posted-1440x900.png", "sha256": "ed4556bb67595c2e9e4c6f1b74d7f6384058c9e5a244074261f0ef973c2d2f0b", "state": "GRN-2026-0041 POSTED — 240 ordered / 40 delivered / 38 accepted / 2 rejected / 202 outstanding, certifiable GHS 174,952" },
+    { "file": "fv-demo-before-lock-cp5-1440x900.png", "sha256": "daeef07e7e15a84d94d28bd800b5fb167d786cd555eb6ca7e3166615389dab6d", "state": "FV-DEMO-0001 before this checkpoint's live transition (carried over PENDING/VALIDATED state from Checkpoint 4 baseline)" },
+    { "file": "fv-demo-after-lock-cp5-1440x900.png", "sha256": "61858265c34ed8d47caadf37588f7c1a4944ada3ea852031a4181a0b114911cc", "state": "Result banner after clicking Validate & Lock CREDIT this run — locked route, PO-DEMO-0001 already existed so re-confirms idempotency" },
+    { "file": "P07/po-demo-before-fulfilment-1440x900.png", "sha256": "760807fdb03535a2aa263ec696c9d3d1e2eb75da79d14be84cafaa4577dbfb56", "state": "PO-DEMO-0001 ISSUED, before Issue PO & Open Fulfilment clicked — US$11,514 gross, SAFE GLOBAL (NR-GH-SP-037), fulfilled/certified balance 0%" },
+    { "file": "P08/grn-demo-draft-1440x900.png", "sha256": "8cd77bc9408fcf637d0bc87c61225ea690c1b22af9cfe379eb66f2fe8343478d", "state": "GRN-DEMO-0001-L1 DRAFT — live-created by Issue PO & Open Fulfilment, PostReceiptForm visible with accepted defaulted to 500 m2" },
+    { "file": "P08/grn-demo-posted-1440x900.png", "sha256": "bc57fc6499d9c38c0af8bb2eb7ca175460e5f3aed29d938dbcbf7f98f8260988", "state": "GRN-DEMO-0001-L1 POSTED — live-posted accepted 500 / rejected 0 / outstanding 0, certifiable US$9,595 (500 x 19.19)" },
+    { "file": "P07/po-demo-after-fulfilment-summary-1440x900.png", "sha256": "829b75617329d628243216264a9596d8a81331c3752912263834940687d74ed0", "state": "PO-DEMO-0001 re-checked — fulfilled/certified balance now 100% (500/500 m2), header shows static all-fulfilled badge instead of the Open Fulfilment button" },
+    { "file": "P07/po-demo-after-fulfilment-lines-1440x900.png", "sha256": "fed2914179ede1033fb6a3358b5875637766580783b0446f1462cbf9baa67c27", "state": "PO-DEMO-0001 Lines tab — sole line shows GRN-DEMO-0001-L1 (POSTED)" },
+    { "file": "control-room-before-checkpoint5-1440x900.png", "sha256": "fc99fec1e772968288835b46b03e0f0c8d86459c9d5556160057f462c2c151e5", "state": "Page 01 baseline before this checkpoint's live transition — Block & Masonry row still shown at Order & Commit" },
+    { "file": "control-room-after-checkpoint5-1440x900.png", "sha256": "579c5c9981f9cfd94bcd51c0a6eece21708172a332aa7ccc65ecff56a308351a", "state": "Page 01 re-checked after demo fulfilment posted — Block & Masonry row's Active gate/next control now correctly reads Fulfilment / PV & Settle (activeGate bug fixed this checkpoint, see report SS9); top lifecycle spine bucket 7 (Fulfilment) already read 1/GHS 0 correctly before the fix" },
+    { "file": "request-dossier-demo-after-checkpoint5-1440x900.png", "sha256": "1531fdac4f5ea003fc1fa5de0370d396d4cfe07af63830fa5e2196467fd8b344", "state": "P03 MR-DEMO-0001 re-checked for regressions — unchanged from Checkpoint 2/3 shape, no P07/P08 fields surfaced here (by design, not a gap)" },
+    { "file": "requests-register-after-checkpoint5-1440x900.png", "sha256": "673910b65cd677e7a12da2b9c6a2dda3dcbfc09801ed2bd4beb83e0f4ebd6ea3", "state": "P02 re-checked for regressions" }
+  ],
+  "notesOnMissingStates": "Only 'populated' plus one live before/after transition per page. Amend/Cancel PO, partial/multiple GRNs against the same line, rejection-driven write-off/redelivery decision flow, quality evidence capture, and Commercial Terms/Delivery Schedule/Commitments/Documents/Workflow/Audit tabs (all marked 'soon' in the UI) are not covered — disclosed gap, consistent with prior checkpoints."
+}

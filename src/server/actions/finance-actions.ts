@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { financeValidations, awardDecisions, purchaseOrders } from "@/db/schema";
+import { financeValidations, awardDecisions, awardLines, purchaseOrders, purchaseOrderLines } from "@/db/schema";
 
 export type ValidateLockResult =
   | { status: "locked"; route: string; purchaseOrderReference: string | null }
@@ -79,6 +79,30 @@ export async function validateAndLockRoute(
         })
         .returning();
       purchaseOrderReference = po.reference;
+
+      // PO lines mirror the award's own lines at the same real 20%
+      // combined VAT+NHIL+GETFund rate used in the Finance Validation
+      // formula bridge — real, not re-derived independently.
+      const lines = await db.select().from(awardLines).where(eq(awardLines.awardId, award.id));
+      await db.insert(purchaseOrderLines).values(
+        lines.map((l) => {
+          const net = Number(l.netAmount);
+          const tax = Math.round(net * 0.2 * 100) / 100;
+          return {
+            purchaseOrderId: po.id,
+            awardLineId: l.id,
+            lineNo: l.lineNo,
+            description: l.description,
+            quantity: l.quantity,
+            unit: l.unit,
+            rate: l.rate,
+            net: l.netAmount,
+            taxAmount: tax.toFixed(2),
+            gross: (net + tax).toFixed(2),
+            currency: l.currency,
+          };
+        })
+      );
     }
   }
 

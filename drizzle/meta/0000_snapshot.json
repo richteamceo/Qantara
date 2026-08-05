@@ -1,5 +1,5 @@
 {
-  "id": "12cfb19e-c28c-4b7c-a915-ac8391eee71c",
+  "id": "db4140f7-767d-4794-a926-ebce299716e5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -485,11 +485,25 @@
           "primaryKey": false,
           "notNull": true
         },
+        "purchase_order_line_id": {
+          "name": "purchase_order_line_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "reference": {
           "name": "reference",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "fulfilment_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'DRAFT'"
         },
         "delivered_qty": {
           "name": "delivered_qty",
@@ -530,6 +544,19 @@
           "tableTo": "purchase_orders",
           "columnsFrom": [
             "purchase_order_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fulfilment_entries_purchase_order_line_id_purchase_order_lines_id_fk": {
+          "name": "fulfilment_entries_purchase_order_line_id_purchase_order_lines_id_fk",
+          "tableFrom": "fulfilment_entries",
+          "tableTo": "purchase_order_lines",
+          "columnsFrom": [
+            "purchase_order_line_id"
           ],
           "columnsTo": [
             "id"
@@ -827,6 +854,119 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.purchase_order_lines": {
+      "name": "purchase_order_lines",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "purchase_order_id": {
+          "name": "purchase_order_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "award_line_id": {
+          "name": "award_line_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "line_no": {
+          "name": "line_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "numeric(18, 3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rate": {
+          "name": "rate",
+          "type": "numeric(18, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "net": {
+          "name": "net",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tax_amount": {
+          "name": "tax_amount",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gross": {
+          "name": "gross",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "purchase_order_lines_purchase_order_id_purchase_orders_id_fk": {
+          "name": "purchase_order_lines_purchase_order_id_purchase_orders_id_fk",
+          "tableFrom": "purchase_order_lines",
+          "tableTo": "purchase_orders",
+          "columnsFrom": [
+            "purchase_order_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "purchase_order_lines_award_line_id_award_lines_id_fk": {
+          "name": "purchase_order_lines_award_line_id_award_lines_id_fk",
+          "tableFrom": "purchase_order_lines",
+          "tableTo": "award_lines",
+          "columnsFrom": [
+            "award_line_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1275,6 +1415,14 @@
       "values": [
         "PENDING",
         "VALIDATED"
+      ]
+    },
+    "public.fulfilment_status": {
+      "name": "fulfilment_status",
+      "schema": "public",
+      "values": [
+        "DRAFT",
+        "POSTED"
       ]
     },
     "public.package_status": {
